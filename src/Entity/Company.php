@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use App\Repository\CompanyRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Asset;
+
 
 #[ORM\Entity(repositoryClass: CompanyRepository::class)]
 class Company
@@ -13,9 +15,11 @@ class Company
     #[ORM\Column]
     private ?int $id = null;
 
+    #[Asset\NotBlank(message: "Une company doit avoir un nom")]
     #[ORM\Column(length: 255)]
     private ?string $name = null;
 
+    #[Asset\NotBlank(message: "Un job doit avoir un nom")]
     #[ORM\Column(length: 255)]
     private ?string $job = null;
 
