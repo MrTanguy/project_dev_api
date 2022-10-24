@@ -69,6 +69,7 @@ class CompanyRepository extends ServiceEntityRepository
         $qb = $this->createQueryBuilder('s');
         $qb->setFirstResult(($page - 1) * $limit);
         $qb->setMaxResults($limit);
+        $qb->where('s.status = \'on\'');
         return $qb->getQuery()->getResult(); 
 
     }
