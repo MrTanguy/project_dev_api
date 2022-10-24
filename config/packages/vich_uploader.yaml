@@ -9,4 +9,4 @@ vich_uploader:
         pictures:
             uri_prefix: /assets/pictures
             upload_destination: '%kernel.project_dir%/public/images/pictures'
-            namer: Vich\UploaderBundle\Naming\OrignameNamer
+            namer: Vich\UploaderBundle\Naming\SmartUniqueNamer

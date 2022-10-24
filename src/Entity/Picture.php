@@ -2,13 +2,13 @@
 
 namespace App\Entity;
 
-use App\Repository\RealNameRepository;
+use App\Repository\PictureRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Vich\UploaderBundle\Mapping\Annotation as Vich;
 use Symfony\Component\HttpFoundation\File\FIle;
 
-#[ORM\Entity(repositoryClass: RealNameRepository::class)]
-class RealName
+#[ORM\Entity(repositoryClass: PictureRepository::class)]
+class Picture
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -24,7 +24,7 @@ class RealName
     #[ORM\Column(length: 255)]
     private ?string $publicPath = null;
 
-    #[ORM\Column(length: 50)]
+    #[ORM\Column(length: 255)]
     private ?string $mimeType = null;
 
     #[ORM\Column(length: 20)]
@@ -35,8 +35,6 @@ class RealName
      * @vich\UploadableField(mapping="pictures", fileNameProperty="$realPath")
      */
     private ?File $file;
-
-    # AJOUTER LA NOTE ICI
 
     public function getId(): ?int
     {
@@ -72,7 +70,7 @@ class RealName
         return $this->file;
     }
 
-    public function setFile(?File $file): ?RealName
+    public function setFile(?File $file): ?Picture
     {
         $this->file = $file;
         return $this;

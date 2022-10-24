@@ -10,22 +10,20 @@ use Symfony\Component\HttpKernel\KernelEvents;
 
 class ExceptionSubscriber implements EventSubscriberInterface
 {
-    public function onKernelController(ExceptionEvent $event): void
+    public function onKernelException(ExceptionEvent $event): void
     {
         $exception = $event->getThrowable();
-	
-        if($exception instanceof HttpException) 
-        {
+
+        if($exception instanceof HttpException){
             $data = [
                 'status' => $exception->getStatusCode(),
-                'message' => $exception->getMessage()
+                "message" => $exception->getMessage()
             ];
             $event->setResponse(new JsonResponse($data));
-        } else
-        {
+        } else {
             $data = [
                 'status' => 500,
-                'message' => $exception->getMessage()
+                "message" => $exception->getMessage()
             ];
             $event->setResponse(new JsonResponse($data));
         }
@@ -34,7 +32,7 @@ class ExceptionSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            KernelEvents::CONTROLLER => 'onKernelController',
+            KernelEvents::EXCEPTION => 'onKernelException',
         ];
     }
 }
