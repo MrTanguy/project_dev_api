@@ -6,6 +6,7 @@ use App\Entity\Professional;
 use App\Repository\CompanyRepository;
 use App\Repository\ProfessionalRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -66,7 +67,9 @@ class ProfessionalController extends AbstractController
         return new JsonResponse(null, JsonResponse::HTTP_NO_CONTENT);
     }
 
+    
     #[Route('/api/professionals', name: 'professional.create', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN', message: "Hanhanhan vous n'avez pas dit le mot magiqueuuuh")]
     public function createProfessional
     (
         Request $request,
@@ -81,10 +84,10 @@ class ProfessionalController extends AbstractController
         $professional->setStatus('on');
 
         $content = $request->toArray();
+        #dd($content)
         $idCompany = $content["companyJobId"];
-        dd($idCompany);
 
-        $professional->setCompanyJobId($companyRepository->find($idCompany));
+        $professional->setCompanyJobId($idCompany);
 
         $errors = $validator->validate($professional);
         if($errors->count() > 0)
@@ -95,7 +98,7 @@ class ProfessionalController extends AbstractController
         $entityManager->persist($professional);
         $entityManager->flush();
 
-        $location = $urlGenerator->generate('professionals.get', ["idProfessional" => $professional->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
+        $location = $urlGenerator->generate('professional.get', ["idProfessional" => $professional->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
 
         $jsonProfessional = $serializer->serialize($professional, 'json', ['getProfessional']);
         return new JsonResponse($jsonProfessional, JsonResponse::HTTP_CREATED, ["Location" => $location], true);
@@ -117,7 +120,7 @@ class ProfessionalController extends AbstractController
         $entityManager->persist($professional);
         $entityManager->flush();
 
-        $location = $urlGenerator->generate("professionals.get", ["idProfessional" => $professional->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
+        $location = $urlGenerator->generate("professional.get", ["idProfessional" => $professional->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
 
         $jsonProfessional = $serializer->serialize($professional, "json", ["getProfessional"]);
         return new JsonResponse($jsonProfessional, JsonResponse::HTTP_CREATED, ["Location" => $location], true);
