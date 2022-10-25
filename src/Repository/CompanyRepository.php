@@ -64,14 +64,4 @@ class CompanyRepository extends ServiceEntityRepository
 //        ;
 //    }
 
-    public function findWithPagination($page, $limit)
-    {
-        $qb = $this->createQueryBuilder('s');
-        $qb->setFirstResult(($page - 1) * $limit);
-        $qb->setMaxResults($limit);
-        $qb->where('s.status = \'on\'');
-        return $qb->getQuery()->getResult(); 
-
-    }
-
 }

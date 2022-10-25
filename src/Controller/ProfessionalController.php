@@ -81,8 +81,8 @@ class ProfessionalController extends AbstractController
         $professional->setStatus('on');
 
         $content = $request->toArray();
-        # DOUTE ICI
-        $idCompany = $content["company_job_id"];
+        $idCompany = $content["companyJobId"];
+        dd($idCompany);
 
         $professional->setCompanyJobId($companyRepository->find($idCompany));
 
