@@ -2,26 +2,26 @@
 
 namespace App\Repository;
 
-use App\Entity\Professional;
+use App\Entity\Picture;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<Professional>
+ * @extends ServiceEntityRepository<Picture>
  *
- * @method Professional|null find($id, $lockMode = null, $lockVersion = null)
- * @method Professional|null findOneBy(array $criteria, array $orderBy = null)
- * @method Professional[]    findAll()
- * @method Professional[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @method Picture|null find($id, $lockMode = null, $lockVersion = null)
+ * @method Picture|null findOneBy(array $criteria, array $orderBy = null)
+ * @method Picture[]    findAll()
+ * @method Picture[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
-class ProfessionalRepository extends ServiceEntityRepository
+class PictureRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, Professional::class);
+        parent::__construct($registry, Picture::class);
     }
 
-    public function save(Professional $entity, bool $flush = false): void
+    public function save(Picture $entity, bool $flush = false): void
     {
         $this->getEntityManager()->persist($entity);
 
@@ -30,7 +30,7 @@ class ProfessionalRepository extends ServiceEntityRepository
         }
     }
 
-    public function remove(Professional $entity, bool $flush = false): void
+    public function remove(Picture $entity, bool $flush = false): void
     {
         $this->getEntityManager()->remove($entity);
 
@@ -40,7 +40,7 @@ class ProfessionalRepository extends ServiceEntityRepository
     }
 
 //    /**
-//     * @return Professional[] Returns an array of Professional objects
+//     * @return Picture[] Returns an array of Picture objects
 //     */
 //    public function findByExampleField($value): array
 //    {
@@ -54,7 +54,7 @@ class ProfessionalRepository extends ServiceEntityRepository
 //        ;
 //    }
 
-//    public function findOneBySomeField($value): ?Professional
+//    public function findOneBySomeField($value): ?Picture
 //    {
 //        return $this->createQueryBuilder('p')
 //            ->andWhere('p.exampleField = :val')
@@ -63,14 +63,4 @@ class ProfessionalRepository extends ServiceEntityRepository
 //            ->getOneOrNullResult()
 //        ;
 //    }
-
-    public function findWithPagination($page, $limit)
-    {
-        $qb = $this->createQueryBuilder('s');
-        $qb->setFirstResult(($page - 1) * $limit);
-        $qb->setMaxResults($limit);
-        $qb->where('s.status = \'on\'');
-        return $qb->getQuery()->getResult(); 
-    }
-
 }

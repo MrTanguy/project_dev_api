@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\ProfessionalRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Asset;
 
 #[ORM\Entity(repositoryClass: ProfessionalRepository::class)]
 class Professional
@@ -13,16 +14,25 @@ class Professional
     #[ORM\Column]
     private ?int $id = null;
 
+    #[Asset\NotBlank(message: "Un professionel doit avoir un prenom")]
     #[ORM\Column(length: 255)]
     private ?string $firstname = null;
 
+    #[Asset\NotBlank(message: "Un professionel doit avoir un nom")]
     #[ORM\Column(length: 255)]
     private ?string $lastname = null;
 
+    #[Asset\NotBlank(message: "Un job doit avoir un nom")]
     #[ORM\Column(length: 255)]
     private ?string $job = null;
 
     #[ORM\Column(length: 255)]
+    #[Asset\NotBlank(message: "Un professionel doit avoir un status")]
+    #[Asset\NotNull()]
+    #[Asset\Choice(
+        choices: ['on', 'off'],
+        message: 'Error status'
+    )]
     private ?string $status = null;
 
     #[ORM\Column(nullable: true)]

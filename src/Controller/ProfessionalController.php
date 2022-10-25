@@ -5,7 +5,6 @@ namespace App\Controller;
 use App\Entity\Professional;
 use App\Repository\CompanyRepository;
 use App\Repository\ProfessionalRepository;
-use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -15,8 +14,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
-use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class ProfessionalController extends AbstractController
 {
@@ -32,10 +31,14 @@ class ProfessionalController extends AbstractController
     #[Route('/api/professionals', name: 'professional.getAll', methods:['GET'])]
     public function getAllProfessionals(
         ProfessionalRepository $repository,
-        SerializerInterface $serializer
+        SerializerInterface $serializer,
+        Request $request
     ) : JsonResponse
     {
-        $professionals = $repository->findAll();
+        $page = $request->get('page', 1);
+        $limit = $request->get('limit', 5);
+        $limit = $limit > 20 ? 20 : $limit;
+        $professionals = $repository->findWithPagination($page, $limit);
         $jsonProfessionals = $serializer->serialize($professionals, 'json');
         return new JsonResponse($jsonProfessionals, Response::HTTP_OK, [], true);
     }
@@ -51,7 +54,7 @@ class ProfessionalController extends AbstractController
     }
 
     #[Route('/api/professionals/{idProfessional}', name: 'professional.delete', methods: ['METHODE'])]
-    #[ParamConverter("professional", options: ['id' => 'idProffesional'], class: 'App\Entity\Professional')]
+    #[ParamConverter("professional", options: ['id' => 'idProfessional'], class: 'App\Entity\Professional')]
     public function deleteProfesional
     (
         Professional $professional,
@@ -70,6 +73,7 @@ class ProfessionalController extends AbstractController
         EntityManagerInterface $entityManager,
         CompanyRepository $companyRepository,
         SerializerInterface $serializer,
+        ValidatorInterface $validator,
         UrlGeneratorInterface $urlGenerator
     ) : JsonResponse
     {
@@ -77,10 +81,16 @@ class ProfessionalController extends AbstractController
         $professional->setStatus('on');
 
         $content = $request->toArray();
-        # DOUTE ICI
-        $idCompany = $content["company_job_id"];
+        $idCompany = $content["companyJobId"];
+        dd($idCompany);
 
         $professional->setCompanyJobId($companyRepository->find($idCompany));
+
+        $errors = $validator->validate($professional);
+        if($errors->count() > 0)
+        {
+            return new JsonResponse($serializer->serialize($errors, 'json'), JsonResponse::HTTP_BAD_REQUEST, [], true);
+        };
 
         $entityManager->persist($professional);
         $entityManager->flush();
