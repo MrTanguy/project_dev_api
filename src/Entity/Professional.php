@@ -38,6 +38,12 @@ class Professional
     #[ORM\Column(nullable: true)]
     private ?int $company_job_id = null;
 
+    #[ORM\Column]
+    private ?int $noteCount = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?float $noteAvg = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -99,6 +105,30 @@ class Professional
     public function setCompanyJobId(?int $company_job_id): self
     {
         $this->company_job_id = $company_job_id;
+
+        return $this;
+    }
+
+    public function getNoteCount(): ?int
+    {
+        return $this->noteCount;
+    }
+
+    public function setNoteCount(int $noteCount): self
+    {
+        $this->noteCount = $noteCount;
+
+        return $this;
+    }
+
+    public function getNoteAvg(): ?float
+    {
+        return $this->noteAvg;
+    }
+
+    public function setNoteAvg(?float $noteAvg): self
+    {
+        $this->noteAvg = $noteAvg;
 
         return $this;
     }

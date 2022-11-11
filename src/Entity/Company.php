@@ -23,6 +23,15 @@ class Company
     #[ORM\Column(length: 255)]
     private ?string $job = null;
 
+    #[ORM\Column(length: 50)]
+    private ?string $status = null;
+
+    #[ORM\Column]
+    private ?int $noteCount = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?float $noteAvg = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -48,6 +57,42 @@ class Company
     public function setJob(string $job): self
     {
         $this->job = $job;
+
+        return $this;
+    }
+
+    public function getStatus(): ?string
+    {
+        return $this->status;
+    }
+
+    public function setStatus(string $status): self
+    {
+        $this->status = $status;
+
+        return $this;
+    }
+
+    public function getNoteCount(): ?int
+    {
+        return $this->noteCount;
+    }
+
+    public function setNoteCount(int $noteCount): self
+    {
+        $this->noteCount = $noteCount;
+
+        return $this;
+    }
+
+    public function getNoteAvg(): ?float
+    {
+        return $this->noteAvg;
+    }
+
+    public function setNoteAvg(?float $noteAvg): self
+    {
+        $this->noteAvg = $noteAvg;
 
         return $this;
     }

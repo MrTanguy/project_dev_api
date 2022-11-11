@@ -56,6 +56,7 @@ class ProfessionalController extends AbstractController
 
     #[Route('/api/professionals/{idProfessional}', name: 'professional.delete', methods: ['METHODE'])]
     #[ParamConverter("professional", options: ['id' => 'idProfessional'], class: 'App\Entity\Professional')]
+    #[IsGranted('ROLE_ADMIN', message: "Hanhanhan vous n'avez pas dit le mot magiqueuuuh")]
     public function deleteProfesional
     (
         Professional $professional,
@@ -84,7 +85,6 @@ class ProfessionalController extends AbstractController
         $professional->setStatus('on');
 
         $content = $request->toArray();
-        #dd($content)
         $idCompany = $content["companyJobId"];
 
         $professional->setCompanyJobId($idCompany);
@@ -105,6 +105,7 @@ class ProfessionalController extends AbstractController
     }
 
     #[Route('/api/professionals/{idProfessional}', name: 'professional.update', methods: ['PUT'])]
+    #[IsGranted('ROLE_ADMIN', message: "Hanhanhan vous n'avez pas dit le mot magiqueuuuh")]
     public function updateProfessional
     (
         Professional $professional,

@@ -27,7 +27,7 @@ class AppFixtures extends Fixture
 
     public function __construct(UserPasswordHasherInterface $userPasswordHasher)
     {
-        $this->faker = Factory::create();
+        $this->faker = Factory::create("fr_FR");
         $this->userPasswordHasher = $userPasswordHasher;
     }
 
@@ -55,29 +55,43 @@ class AppFixtures extends Fixture
             ->setPassword($this->userPasswordHasher->hashPassword($userUser, $password));
             $manager->persist($userUser);
         }
+        $listCompany = [];
 
-        $companyList = [];
-        for ($i = 0 ; $i < 5 ; $i++)
+
+        for ($loop = 0 ; $loop < 4 ; $loop++)
         {
+            // Définition d'un job
+            $job = $this->faker->jobTitle();
+
+            // Création d'une Company ayant pour activité le $job
+
             $company = new Company();
             $company->setName($this->faker->company())
-            ->setJob($this->faker->jobTitle());
+            ->setJob($job)
+            ->setStatus('on')
+            ->setNoteAvg(rand(1, 10)/10)
+            ->setNoteCount(random_int(1, 10));
             $manager->persist($company);
-            $companyList[] = $company;
+            $listCompany[$job] = $company;
         }
+            // Création de 5 Professionels ayant pour activité $job
 
-        for ($i = 0 ; $i < 20 ; $i++)
-        {
-            $professional = new Professional();
-            $professional->setFirstname($this->faker->firstName())
-            ->setLastname($this->faker->lastName())
-            ->setJob($this->faker->jobTitle())
-            ->setStatus('on');
-            $manager->persist($professional);
-        }
-
-        //$company_job_id
-
+        $manager->flush();
+        foreach ($listCompany as $key => $value) {
+            for ($i = 0 ; $i < 5 ; $i++)
+            {
+                $professional = new Professional();
+                $professional->setFirstname($this->faker->firstName())
+                ->setLastname($this->faker->lastName())
+                ->setJob($key)
+                ->setStatus('on')
+                ->setCompanyJobId($value->getId())
+                ->setNoteAvg(rand(10, 100)/10)
+                ->setNoteCount(random_int(1, 10));
+                $manager->persist($professional);
+            }
+        }  
+            
         $manager->flush();
     }
 }
