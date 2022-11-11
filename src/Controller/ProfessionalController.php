@@ -126,4 +126,39 @@ class ProfessionalController extends AbstractController
         $jsonProfessional = $serializer->serialize($professional, "json", ["getProfessional"]);
         return new JsonResponse($jsonProfessional, JsonResponse::HTTP_CREATED, ["Location" => $location], true);
     }
+
+
+    #[Route('/api/professionals/{idProfessional}', name: 'professional.addNote', methods: ['POST'])]
+    #[ParamConverter("professional", options: ['id' => 'idProfessional'], class:'App\Entity\Professional')]
+    public function addNoteProfessionals(
+        Request $request,
+        Professional $professional,
+        EntityManagerInterface $entityManager,
+        UrlGeneratorInterface $urlGenerator,
+        SerializerInterface $serializer
+    ) : JsonResponse
+    {
+        # récupération de la note, argument
+        $newNote = $request->get('note', 1);
+
+        # calcul de la nouvelle moyenne
+        # $newNoteAvg = (Nombre de note * note moyenne + $newNote)/(nombre de note +1)
+        $newNoteAvg = ($professional->getNoteCount()*$professional->getNoteAvg()+$newNote)/($professional->getNoteCount()+1);
+        $professional->setNoteAvg($newNoteAvg);
+
+
+        # incrémentation de la variable NoteCount car une note est rajouté
+        $professional->setNoteCount($professional->getNoteCount()+1);
+
+
+        # persist + flush pour mettre à jour la table
+        $entityManager->persist($professional);
+        $entityManager->flush();
+
+        $location = $urlGenerator->generate('professional.get', ["idProfessional" => $professional->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
+
+        $jsonProfessional = $serializer->serialize($professional, 'json', ['getProfessional']);
+        return new JsonResponse($jsonProfessional, JsonResponse::HTTP_CREATED, ["Location" => $location], true);
+    }
+    
 }
