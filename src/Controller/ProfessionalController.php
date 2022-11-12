@@ -6,6 +6,7 @@ use App\Entity\Professional;
 use App\Repository\CompanyRepository;
 use App\Repository\ProfessionalRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -55,6 +56,7 @@ class ProfessionalController extends AbstractController
 
     #[Route('/api/professionals/{idProfessional}', name: 'professional.delete', methods: ['METHODE'])]
     #[ParamConverter("professional", options: ['id' => 'idProfessional'], class: 'App\Entity\Professional')]
+    #[IsGranted('ROLE_ADMIN', message: "Hanhanhan vous n'avez pas dit le mot magiqueuuuh")]
     public function deleteProfesional
     (
         Professional $professional,
@@ -66,7 +68,9 @@ class ProfessionalController extends AbstractController
         return new JsonResponse(null, JsonResponse::HTTP_NO_CONTENT);
     }
 
+    
     #[Route('/api/professionals', name: 'professional.create', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN', message: "Hanhanhan vous n'avez pas dit le mot magiqueuuuh")]
     public function createProfessional
     (
         Request $request,
@@ -82,9 +86,8 @@ class ProfessionalController extends AbstractController
 
         $content = $request->toArray();
         $idCompany = $content["companyJobId"];
-        dd($idCompany);
 
-        $professional->setCompanyJobId($companyRepository->find($idCompany));
+        $professional->setCompanyJobId($idCompany);
 
         $errors = $validator->validate($professional);
         if($errors->count() > 0)
@@ -95,13 +98,14 @@ class ProfessionalController extends AbstractController
         $entityManager->persist($professional);
         $entityManager->flush();
 
-        $location = $urlGenerator->generate('professionals.get', ["idProfessional" => $professional->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
+        $location = $urlGenerator->generate('professional.get', ["idProfessional" => $professional->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
 
         $jsonProfessional = $serializer->serialize($professional, 'json', ['getProfessional']);
         return new JsonResponse($jsonProfessional, JsonResponse::HTTP_CREATED, ["Location" => $location], true);
     }
 
     #[Route('/api/professionals/{idProfessional}', name: 'professional.update', methods: ['PUT'])]
+    #[IsGranted('ROLE_ADMIN', message: "Hanhanhan vous n'avez pas dit le mot magiqueuuuh")]
     public function updateProfessional
     (
         Professional $professional,
@@ -117,9 +121,44 @@ class ProfessionalController extends AbstractController
         $entityManager->persist($professional);
         $entityManager->flush();
 
-        $location = $urlGenerator->generate("professionals.get", ["idProfessional" => $professional->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
+        $location = $urlGenerator->generate("professional.get", ["idProfessional" => $professional->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
 
         $jsonProfessional = $serializer->serialize($professional, "json", ["getProfessional"]);
         return new JsonResponse($jsonProfessional, JsonResponse::HTTP_CREATED, ["Location" => $location], true);
     }
+
+
+    #[Route('/api/professionals/{idProfessional}', name: 'professional.addNote', methods: ['POST'])]
+    #[ParamConverter("professional", options: ['id' => 'idProfessional'], class:'App\Entity\Professional')]
+    public function addNoteProfessionals(
+        Request $request,
+        Professional $professional,
+        EntityManagerInterface $entityManager,
+        UrlGeneratorInterface $urlGenerator,
+        SerializerInterface $serializer
+    ) : JsonResponse
+    {
+        # récupération de la note, argument
+        $newNote = $request->get('note', 1);
+
+        # calcul de la nouvelle moyenne
+        # $newNoteAvg = (Nombre de note * note moyenne + $newNote)/(nombre de note +1)
+        $newNoteAvg = ($professional->getNoteCount()*$professional->getNoteAvg()+$newNote)/($professional->getNoteCount()+1);
+        $professional->setNoteAvg($newNoteAvg);
+
+
+        # incrémentation de la variable NoteCount car une note est rajouté
+        $professional->setNoteCount($professional->getNoteCount()+1);
+
+
+        # persist + flush pour mettre à jour la table
+        $entityManager->persist($professional);
+        $entityManager->flush();
+
+        $location = $urlGenerator->generate('professional.get', ["idProfessional" => $professional->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
+
+        $jsonProfessional = $serializer->serialize($professional, 'json', ['getProfessional']);
+        return new JsonResponse($jsonProfessional, JsonResponse::HTTP_CREATED, ["Location" => $location], true);
+    }
+    
 }

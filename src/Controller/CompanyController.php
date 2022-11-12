@@ -8,9 +8,11 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Request;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 
 class CompanyController extends AbstractController
@@ -57,34 +59,27 @@ class CompanyController extends AbstractController
         $entityManager->flush();
         return new JsonResponse(null, JsonResponse::HTTP_NO_CONTENT);
     }
-    /*
+    
     #[Route('/api/companies', name: 'company.create', methods: ['POST'])]
     public function createCompany
     (
         Request $request,
         EntityManagerInterface $entityManager,
-        ProfessionalRepository $companyRepository,
         SerializerInterface $serializer,
         UrlGeneratorInterface $urlGenerator
     ) : JsonResponse
     {
         $company = $serializer->deserialize($request->getContent(), Company::class, 'json');
         $company->setStatus('on');
+        $company->setNoteCount(0);
 
-        $content = $request->toArray();
-        # DOUTE ICI
-        $idProfessional = $content["id"];
 
-        $company->set
-        $professional->setCompanyJobId($companyRepository->find($idCompany));
-
-        $entityManager->persist($professional);
+        $entityManager->persist($company);
         $entityManager->flush();
 
-        $location = $urlGenerator->generate('professionals.get', ["idProfessional" => $professional->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
+        $location = $urlGenerator->generate('company.get', ["idCompany" => $company->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
 
-        $jsonProfessional = $serializer->serialize($professional, 'json', ['getProfessional']);
-        return new JsonResponse($jsonProfessional, JsonResponse::HTTP_CREATED, ["Location" => $location], true);
+        $jsonCompany = $serializer->serialize($company, 'json', ['getCompany']);
+        return new JsonResponse($jsonCompany, JsonResponse::HTTP_CREATED, ["Location" => $location], true);
     }
-    */
 }
