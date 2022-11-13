@@ -61,8 +61,7 @@ class CompanyController extends AbstractController
     }
     
     #[Route('/api/companies', name: 'company.create', methods: ['POST'])]
-    public function createCompany
-    (
+    public function createCompany(
         Request $request,
         EntityManagerInterface $entityManager,
         SerializerInterface $serializer,
@@ -82,4 +81,20 @@ class CompanyController extends AbstractController
         $jsonCompany = $serializer->serialize($company, 'json', ['getCompany']);
         return new JsonResponse($jsonCompany, JsonResponse::HTTP_CREATED, ["Location" => $location], true);
     }
+
+    // Récupère la note de l'entreprise.
+    #[Route('/api/companies/note/{idCompany}', name: ' company.getNote', methods: ['GET'])]
+    #[ParamConverter("company", options: ['id' => 'idCompany'], class:'App\Entity\Company')]
+    public function getNoteProfessionals(
+        Company $company,
+        SerializerInterface $serializer
+    ) : JsonResponse
+    {
+        //Récupération de la note moyenne
+        $note = $company->getNoteAvg();
+        $noteCount = $company->getNoteCount();
+
+        return new JsonResponse($serializer->serialize([$note, $noteCount], 'json'), Response::HTTP_OK, ['accept' => 'json'], true);
+    }
+    
 }

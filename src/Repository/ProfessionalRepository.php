@@ -72,5 +72,4 @@ class ProfessionalRepository extends ServiceEntityRepository
         $qb->where('s.status = \'on\'');
         return $qb->getQuery()->getResult(); 
     }
-
 }

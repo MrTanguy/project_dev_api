@@ -2,21 +2,25 @@
 
 namespace App\Controller;
 
+use App\Entity\Company;
 use App\Entity\Professional;
+use Doctrine\ORM\EntityManager;
+use Doctrine\DBAL\Types\StringType;
 use App\Repository\CompanyRepository;
-use App\Repository\ProfessionalRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use App\Repository\ProfessionalRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+use Symfony\Component\Serializer\Serializer;
 
 class ProfessionalController extends AbstractController
 {
@@ -57,8 +61,7 @@ class ProfessionalController extends AbstractController
     #[Route('/api/professionals/{idProfessional}', name: 'professional.delete', methods: ['METHODE'])]
     #[ParamConverter("professional", options: ['id' => 'idProfessional'], class: 'App\Entity\Professional')]
     #[IsGranted('ROLE_ADMIN', message: "Hanhanhan vous n'avez pas dit le mot magiqueuuuh")]
-    public function deleteProfesional
-    (
+    public function deleteProfesional(
         Professional $professional,
         EntityManagerInterface $entityManager
     ) : JsonResponse
@@ -128,7 +131,7 @@ class ProfessionalController extends AbstractController
     }
 
 
-    #[Route('/api/professionals/{idProfessional}', name: 'professional.addNote', methods: ['POST'])]
+    #[Route('/api/professionals/note/{idProfessional}', name: 'professional.addNote', methods: ['POST'])]
     #[ParamConverter("professional", options: ['id' => 'idProfessional'], class:'App\Entity\Professional')]
     public function addNoteProfessionals(
         Request $request,
@@ -161,4 +164,43 @@ class ProfessionalController extends AbstractController
         return new JsonResponse($jsonProfessional, JsonResponse::HTTP_CREATED, ["Location" => $location], true);
     }
     
+    // Récupère la note du professionnel.
+    #[Route('/api/professionals/note/{idProfessional}', name: 'professional.getNote', methods: ['GET'])]
+    #[ParamConverter("professional", options: ['id' => 'idProfessional'], class:'App\Entity\Professional')]
+    public function getNoteProfessionals(
+        Professional $professional,
+        SerializerInterface $serializer
+    ) : JsonResponse
+    {
+        //Récupération de la note moyenne
+        $note = $professional->getNoteAvg();
+        $noteCount = $professional->getNoteCount();
+
+        return new JsonResponse($serializer->serialize([$note, $noteCount], 'json'), Response::HTTP_OK, ['accept' => 'json'], true);
+    }
+    
+    // Récupère la liste des professionnels de l'entreprise classé par note.
+    #[Route('/api/professionals/company/{idCompany}', name: 'professional.getByCompany', methods: ['GET'])]
+    public function getProfessionalsByCompany(
+        ProfessionalRepository $professionalRepository,
+        SerializerInterface $serializer,
+        Int $idCompany
+    ) : JsonResponse
+    {
+        $professionals = $professionalRepository->findBy(['company_job_id' => $idCompany], ['noteAvg' => 'DESC']);
+        return new JsonResponse($serializer->serialize($professionals, 'json'), Response::HTTP_OK, ['accept' => 'json'], true);
+    }
+    
+    // Récupère la liste des professionnels exercant un job classé par note.
+    #[Route('/api/professionals/job/{job}', name: 'professional.getByJob', methods: ['GET'])]
+    public function getProfessionalsByJob(
+        ProfessionalRepository $professionalRepository,
+        SerializerInterface $serializer,
+        String $job
+    ) : JsonResponse
+    {
+        $job = str_replace("_", " ", $job);
+        $professionals = $professionalRepository->findBy(['job' => $job], ['noteAvg' => 'DESC']);
+        return new JsonResponse($serializer->serialize($professionals, 'json'), Response::HTTP_OK, ['accept' => 'json'], true);
+    }
 }

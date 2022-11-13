@@ -33,8 +33,6 @@ class AppFixtures extends Fixture
 
     public function load(ObjectManager $manager): void
     {
-
-
         $userNumber = 10;
 
         // Authenticated Admin
@@ -64,18 +62,17 @@ class AppFixtures extends Fixture
             $job = $this->faker->jobTitle();
 
             // Création d'une Company ayant pour activité le $job
-
             $company = new Company();
             $company->setName($this->faker->company())
             ->setJob($job)
             ->setStatus('on')
-            ->setNoteAvg(rand(1, 10)/10)
+            ->setNoteAvg(rand(1, 100)/10)
             ->setNoteCount(random_int(1, 10));
             $manager->persist($company);
             $listCompany[$job] = $company;
         }
-            // Création de 5 Professionels ayant pour activité $job
 
+        // Création de 5 Professionels ayant pour activité $job
         $manager->flush();
         foreach ($listCompany as $key => $value) {
             for ($i = 0 ; $i < 5 ; $i++)
@@ -90,8 +87,7 @@ class AppFixtures extends Fixture
                 ->setNoteCount(random_int(1, 10));
                 $manager->persist($professional);
             }
-        }  
-            
+        }              
         $manager->flush();
     }
 }
