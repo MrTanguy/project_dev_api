@@ -92,9 +92,7 @@ class CompanyController extends AbstractController
     {
         //Récupération de la note moyenne
         $note = $company->getNoteAvg();
-        $noteCount = $company->getNoteCount();
 
-        return new JsonResponse($serializer->serialize([$note, $noteCount], 'json'), Response::HTTP_OK, ['accept' => 'json'], true);
+        return new JsonResponse($serializer->serialize($note, 'json'), Response::HTTP_OK, ['accept' => 'json'], true);
     }
-    
 }

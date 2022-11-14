@@ -138,24 +138,40 @@ class ProfessionalController extends AbstractController
         Professional $professional,
         EntityManagerInterface $entityManager,
         UrlGeneratorInterface $urlGenerator,
-        SerializerInterface $serializer
+        SerializerInterface $serializer,
+        ProfessionalRepository $professionalRepository,
+        CompanyRepository $companyRepository
     ) : JsonResponse
     {
         # récupération de la note, argument
         $newNote = $request->get('note', 1);
 
-        # calcul de la nouvelle moyenne
-        # $newNoteAvg = (Nombre de note * note moyenne + $newNote)/(nombre de note +1)
-        $newNoteAvg = ($professional->getNoteCount()*$professional->getNoteAvg()+$newNote)/($professional->getNoteCount()+1);
+        # calcul de la nouvelle moyenne de l'employé (arrondi au premier décimale)
+        # $newNoteAvg = round((Nombre de note * note moyenne + $newNote)/(nombre de note +1), 1)
+        $newNoteAvg = round(($professional->getNoteCount()*$professional->getNoteAvg()+$newNote)/($professional->getNoteCount()+1), 1);
         $professional->setNoteAvg($newNoteAvg);
-
-
+        
         # incrémentation de la variable NoteCount car une note est rajouté
         $professional->setNoteCount($professional->getNoteCount()+1);
+        
+        $proCompanyId = $professional->getCompanyJobId();
+        $company= $companyRepository->findOneBy(['id' => $proCompanyId]);
 
+        # Récupération de la liste des employés de la même entreprise que l'employé noté
+        $companyEmployeeList = $professionalRepository->findBy(['company_job_id' => $proCompanyId]);
+        # Récupération des notes moyennes de tout les employés
+        $companyEmployeeNoteList = [];
+        foreach($companyEmployeeList as $employee)
+        {
+            $companyEmployeeNoteList[] = $employee->getNoteAvg();
+        }
+        # calcul de la nouvelle moyenne de l'entreprise
+        $companyEmployeeNoteAvg = round(array_sum($companyEmployeeNoteList)/count($companyEmployeeNoteList), 1);
+        $company->setNoteAvg($companyEmployeeNoteAvg);
 
         # persist + flush pour mettre à jour la table
         $entityManager->persist($professional);
+        $entityManager->persist($company);
         $entityManager->flush();
 
         $location = $urlGenerator->generate('professional.get', ["idProfessional" => $professional->getId()], UrlGeneratorInterface::ABSOLUTE_URL);

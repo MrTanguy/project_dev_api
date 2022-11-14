@@ -26,9 +26,6 @@ class Company
     #[ORM\Column(length: 50)]
     private ?string $status = null;
 
-    #[ORM\Column]
-    private ?int $noteCount = null;
-
     #[ORM\Column(nullable: true)]
     private ?float $noteAvg = null;
 
@@ -69,18 +66,6 @@ class Company
     public function setStatus(string $status): self
     {
         $this->status = $status;
-
-        return $this;
-    }
-
-    public function getNoteCount(): ?int
-    {
-        return $this->noteCount;
-    }
-
-    public function setNoteCount(int $noteCount): self
-    {
-        $this->noteCount = $noteCount;
 
         return $this;
     }
