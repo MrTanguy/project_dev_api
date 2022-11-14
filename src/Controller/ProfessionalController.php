@@ -13,16 +13,20 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Serializer\SerializerInterface;
+#use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
-use Symfony\Component\Serializer\Serializer;
+#use Symfony\Component\Serializer\Serializer;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
+use JMS\Serializer\SerializerInterface;
+use JMS\Serializer\Serializer;
+use JMS\Serializer\SerializationContext;
+use JMS\Serializer\Annotation\Groups;
 
 class ProfessionalController extends AbstractController
 {
@@ -54,14 +58,19 @@ class ProfessionalController extends AbstractController
         return new JsonResponse($jsonProfessionals, Response::HTTP_OK, [], true);
         */
 
-        $idCache = 'getAllProfessionals';
-        $jsonProfessionals = $cache->get($idCache, function (ItemInterface $item) use ($repository, $serializer) {
-            echo "MISE EN CACHE";
-            $item->tag("professionalCache");
-            $professionals = $repository->findAll();
-            return $serializer->serialize($professionals, 'json', ['groups' =>'getProfessionals']);
-        });
+        // $idCache = 'getAllProfessionals';
+        // $jsonProfessionals = $cache->get($idCache, function (ItemInterface $item) use ($repository, $serializer) {
+        //     echo "MISE EN CACHE";
+        //     $item->tag("professionalCache");
+        //     $professionals = $repository->findAll();
+        //     $context = SerializationContext::create()->setGroups(['getAllProfessionals']);
+        //     return $serializer->serialize($professionals, 'json', $context);
+        // });
 
+
+        $professionals = $repository->findAll();
+        $context = SerializationContext::create()->setGroups(['getAllProfessionals']);
+        $jsonProfessionals = $serializer->serialize($professionals, 'json', $context);
        
         return new JsonResponse($jsonProfessionals, Response::HTTP_OK, [], true);
     }
@@ -73,7 +82,9 @@ class ProfessionalController extends AbstractController
         SerializerInterface $serializer
     ) : JsonResponse
     {
-        return new JsonResponse($serializer->serialize($professional, 'json'), Response::HTTP_OK, ['accept' => 'json'], true);
+        $context = SerializationContext::create()->setGroups(["getProfessionals"]);
+        $jsonProfessional = $serializer->serialize($professional, 'json', $context);
+        return new JsonResponse($jsonProfessional, Response::HTTP_OK, ['accept' => 'json'], true);
     }
 
     #[Route('/api/professionals/{idProfessional}', name: 'professional.delete', methods: ['METHODE'])]
@@ -131,6 +142,7 @@ class ProfessionalController extends AbstractController
     }
 
     #[Route('/api/professionals/{idProfessional}', name: 'professional.update', methods: ['PUT'])]
+    #[ParamConverter("professional", options: ['id' => 'idProfessional'], class: 'App\Entity\Professional')]
     #[IsGranted('ROLE_ADMIN', message: "Hanhanhan vous n'avez pas dit le mot magiqueuuuh")]
     public function updateProfessional
     (
@@ -144,7 +156,16 @@ class ProfessionalController extends AbstractController
     {
         $cache->invalidateTags(["professionalCache"]);
 
-        $professional = $serializer->deserialize($request->getContent(), Professional::class, 'json', [AbstractNormalizer::OBJECT_TO_POPULATE => $professional]);
+        #$professional = $serializer->deserialize($request->getContent(), Professional::class, 'json', [AbstractNormalizer::OBJECT_TO_POPULATE => $professional]);
+        $updatedProfessional = $serializer->deserialize($request->getContent(), Professional::class, 'json', );
+        
+        $professional->setFirstname($updatedProfessional->getFirstname() ? $updatedProfessional->getFirstname() : $professional->getFirstname());
+        $professional->setLastname($updatedProfessional->getLastname() ? $updatedProfessional->getLastname() : $professional->getLastname());
+        $professional->setJob($updatedProfessional->getJob() ? $updatedProfessional->getJob() : $professional->getJob());
+        $professional->setCompanyJobId($updatedProfessional->getCompanyJobId() ? $updatedProfessional->getCompanyJobId() : $professional->getCompanyJobId());
+        $professional->setNoteCount($updatedProfessional->getNoteCount() ? $updatedProfessional->getNoteCount() : $professional->getNoteCount());
+        $professional->setNoteAvg($updatedProfessional->getNoteAvg() ? $updatedProfessional->getNoteAvg() : $professional->getNoteAvg());
+
         $professional->setStatus('on');
 
         $entityManager->persist($professional);
@@ -152,7 +173,9 @@ class ProfessionalController extends AbstractController
 
         $location = $urlGenerator->generate("professional.get", ["idProfessional" => $professional->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
 
-        $jsonProfessional = $serializer->serialize($professional, "json", ["getProfessional"]);
+        $context = SerializationContext::create()->setGroups(["getProfessionals"]);
+
+        $jsonProfessional = $serializer->serialize($professional, "json", $context);
         return new JsonResponse($jsonProfessional, JsonResponse::HTTP_CREATED, ["Location" => $location], true);
     }
 

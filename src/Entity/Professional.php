@@ -4,8 +4,23 @@ namespace App\Entity;
 
 use App\Repository\ProfessionalRepository;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Serializer\Annotation\Groups;
+#use Symfony\Component\Serializer\Annotation\Groups;
+use JMS\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Asset;
+
+use Hateoas\Configuration\Annotation as Hateoas;
+/**
+ * @Hateoas\Relation(
+ *    "self",
+ *    href=@Hateoas\Route(
+ *         "professional.get",
+ *         parameters={
+ *             "idProfessional" = "expr(object.getId())"
+ *         }
+ *    ),
+ *    exclusion = @Hateoas\Exclusion(groups="getAllProfessionals")
+ * )
+ */
 
 #[ORM\Entity(repositoryClass: ProfessionalRepository::class)]
 class Professional
@@ -13,22 +28,22 @@ class Professional
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(["getProfessionals"])]
+    #[Groups(["getProfessionals", "getAllProfessionals"])]
     private ?int $id = null;
 
     #[Asset\NotBlank(message: "Un professionel doit avoir un prenom")]
     #[ORM\Column(length: 255)]
-    #[Groups(["getProfessionals"])]
+    #[Groups(["getProfessionals", "getAllProfessionals"])]
     private ?string $firstname = null;
 
     #[Asset\NotBlank(message: "Un professionel doit avoir un nom")]
     #[ORM\Column(length: 255)]
-    #[Groups(["getProfessionals"])]
+    #[Groups(["getProfessionals", "getAllProfessionals"])]
     private ?string $lastname = null;
 
     #[Asset\NotBlank(message: "Un job doit avoir un nom")]
     #[ORM\Column(length: 255)]
-    #[Groups(["getProfessionals"])]
+    #[Groups(["getProfessionals", "getAllProfessionals"])]
     private ?string $job = null;
 
     #[ORM\Column(length: 255)]
@@ -41,15 +56,15 @@ class Professional
     private ?string $status = null;
 
     #[ORM\Column(nullable: true)]
-    #[Groups(["getProfessionals"])]
+    #[Groups(["getProfessionals", "getAllProfessionals"])]
     private ?int $company_job_id = null;
 
     #[ORM\Column]
-    #[Groups(["getProfessionals"])]
+    #[Groups(["getProfessionals", "getAllProfessionals"])]
     private ?int $noteCount = null;
 
     #[ORM\Column(nullable: true)]
-    #[Groups(["getProfessionals"])]
+    #[Groups(["getProfessionals", "getAllProfessionals"])]
     private ?float $noteAvg = null;
 
     public function getId(): ?int
