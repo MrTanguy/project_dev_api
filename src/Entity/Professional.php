@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\ProfessionalRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Asset;
 
 #[ORM\Entity(repositoryClass: ProfessionalRepository::class)]
@@ -12,18 +13,22 @@ class Professional
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(["getProfessionals"])]
     private ?int $id = null;
 
     #[Asset\NotBlank(message: "Un professionel doit avoir un prenom")]
     #[ORM\Column(length: 255)]
+    #[Groups(["getProfessionals"])]
     private ?string $firstname = null;
 
     #[Asset\NotBlank(message: "Un professionel doit avoir un nom")]
     #[ORM\Column(length: 255)]
+    #[Groups(["getProfessionals"])]
     private ?string $lastname = null;
 
     #[Asset\NotBlank(message: "Un job doit avoir un nom")]
     #[ORM\Column(length: 255)]
+    #[Groups(["getProfessionals"])]
     private ?string $job = null;
 
     #[ORM\Column(length: 255)]
@@ -36,12 +41,15 @@ class Professional
     private ?string $status = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(["getProfessionals"])]
     private ?int $company_job_id = null;
 
     #[ORM\Column]
+    #[Groups(["getProfessionals"])]
     private ?int $noteCount = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(["getProfessionals"])]
     private ?float $noteAvg = null;
 
     public function getId(): ?int

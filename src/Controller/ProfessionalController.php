@@ -21,6 +21,8 @@ use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\Serializer\Serializer;
+use Symfony\Contracts\Cache\ItemInterface;
+use Symfony\Contracts\Cache\TagAwareCacheInterface;
 
 class ProfessionalController extends AbstractController
 {
@@ -37,14 +39,30 @@ class ProfessionalController extends AbstractController
     public function getAllProfessionals(
         ProfessionalRepository $repository,
         SerializerInterface $serializer,
-        Request $request
+        Request $request,
+        TagAwareCacheInterface $cache
     ) : JsonResponse
     {
+        /*
         $page = $request->get('page', 1);
         $limit = $request->get('limit', 5);
         $limit = $limit > 20 ? 20 : $limit;
+
+
         $professionals = $repository->findWithPagination($page, $limit);
         $jsonProfessionals = $serializer->serialize($professionals, 'json');
+        return new JsonResponse($jsonProfessionals, Response::HTTP_OK, [], true);
+        */
+
+        $idCache = 'getAllProfessionals';
+        $jsonProfessionals = $cache->get($idCache, function (ItemInterface $item) use ($repository, $serializer) {
+            echo "MISE EN CACHE";
+            $item->tag("professionalCache");
+            $professionals = $repository->findAll();
+            return $serializer->serialize($professionals, 'json', ['groups' =>'getProfessionals']);
+        });
+
+       
         return new JsonResponse($jsonProfessionals, Response::HTTP_OK, [], true);
     }
 
@@ -63,9 +81,11 @@ class ProfessionalController extends AbstractController
     #[IsGranted('ROLE_ADMIN', message: "Hanhanhan vous n'avez pas dit le mot magiqueuuuh")]
     public function deleteProfesional(
         Professional $professional,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        TagAwareCacheInterface $cache
     ) : JsonResponse
     {
+        $cache->invalidateTags(["professionalCache"]);
         $entityManager->remove($professional);
         $entityManager->flush();
         return new JsonResponse(null, JsonResponse::HTTP_NO_CONTENT);
@@ -81,9 +101,12 @@ class ProfessionalController extends AbstractController
         CompanyRepository $companyRepository,
         SerializerInterface $serializer,
         ValidatorInterface $validator,
-        UrlGeneratorInterface $urlGenerator
+        UrlGeneratorInterface $urlGenerator,
+        TagAwareCacheInterface $cache
     ) : JsonResponse
     {
+        $cache->invalidateTags(["professionalCache"]);
+
         $professional = $serializer->deserialize($request->getContent(), Professional::class, 'json');
         $professional->setStatus('on');
 
@@ -115,9 +138,12 @@ class ProfessionalController extends AbstractController
         Request $request,
         EntityManagerInterface $entityManager,
         SerializerInterface $serializer,
-        UrlGeneratorInterface $urlGenerator
+        UrlGeneratorInterface $urlGenerator,
+        TagAwareCacheInterface $cache
     ) : JsonResponse
     {
+        $cache->invalidateTags(["professionalCache"]);
+
         $professional = $serializer->deserialize($request->getContent(), Professional::class, 'json', [AbstractNormalizer::OBJECT_TO_POPULATE => $professional]);
         $professional->setStatus('on');
 
@@ -140,9 +166,12 @@ class ProfessionalController extends AbstractController
         UrlGeneratorInterface $urlGenerator,
         SerializerInterface $serializer,
         ProfessionalRepository $professionalRepository,
-        CompanyRepository $companyRepository
+        CompanyRepository $companyRepository,
+        TagAwareCacheInterface $cache
     ) : JsonResponse
     {
+        $cache->invalidateTags(["professionalCache"]);
+
         # récupération de la note, argument
         $newNote = $request->get('note', 1);
 
