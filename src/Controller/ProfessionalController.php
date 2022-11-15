@@ -27,9 +27,20 @@ use JMS\Serializer\SerializerInterface;
 use JMS\Serializer\Serializer;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\Annotation\Groups;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use OpenApi\Annotations as OA;
 
+/**
+ * @OA\Tag(name="Professional")
+ */
 class ProfessionalController extends AbstractController
 {
+    /**
+    * List the rewards of the specified user.
+    *
+    * This call takes into account all confirmed awards, but not pending or refused awards.
+    */
+
     #[Route('/professional', name: 'app_professional')]
     public function index(): JsonResponse
     {
@@ -39,6 +50,27 @@ class ProfessionalController extends AbstractController
         ]);
     }
 
+    /**
+     * Return l'ensemble des professionels.
+     * 
+     * @OA\Response(
+     *      response=200,
+     *      description="Retourne l'ensemble des professionels",
+     *      @OA\JsonContent(
+     *          type="array",
+     *          @OA\Items(example=@Model(type=Professional::class, groups={"getAllChallenges"}))
+     *      )
+     * )
+     * 
+     * 
+     * @param ProfessionalRepository $repository
+     * @param SerializerInterface $serializer
+     * @param Request $request
+     * @param TagAwareCacheInterface $cache
+     * @return JsonResponse
+     * 
+     */
+    #@OA\Items(example=@Model(type=Challenge::class, groups={"getAllChallenges"}))
     #[Route('/api/professionals', name: 'professional.getAll', methods:['GET'])]
     public function getAllProfessionals(
         ProfessionalRepository $repository,
@@ -123,8 +155,8 @@ class ProfessionalController extends AbstractController
         $entityManager->flush();
 
         $location = $urlGenerator->generate('professional.get', ["idProfessional" => $professional->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
-
-        $jsonProfessional = $serializer->serialize($professional, 'json', ['getProfessional']);
+        $context = SerializationContext::create()->setGroups(["getProfessionals"]);
+        $jsonProfessional = $serializer->serialize($professional, "json", $context);
         return new JsonResponse($jsonProfessional, JsonResponse::HTTP_CREATED, ["Location" => $location], true);
     }
 
@@ -216,7 +248,8 @@ class ProfessionalController extends AbstractController
 
         $location = $urlGenerator->generate('professional.get', ["idProfessional" => $professional->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
 
-        $jsonProfessional = $serializer->serialize($professional, 'json', ['getProfessional']);
+        $context = SerializationContext::create()->setGroups(["getProfessionals"]);
+        $jsonProfessional = $serializer->serialize($professional, 'json', $context);
         return new JsonResponse($jsonProfessional, JsonResponse::HTTP_CREATED, ["Location" => $location], true);
     }
     

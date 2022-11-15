@@ -12,7 +12,11 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Serializer\SerializerInterface;
+use OpenApi\Annotations as OA;
 
+/**
+ * @OA\Tag(name="Picture")
+ */
 class PictureController extends AbstractController
 {
     #[Route('/picture', name: 'app_picture')]

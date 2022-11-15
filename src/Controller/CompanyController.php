@@ -17,8 +17,11 @@ use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+use OpenApi\Annotations as OA;
 
-
+/**
+ * @OA\Tag(name="Company")
+ */
 class CompanyController extends AbstractController
 {
     #[Route('/company', name: 'app_company')]
