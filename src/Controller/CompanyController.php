@@ -3,16 +3,20 @@
 namespace App\Controller;
 
 use App\Entity\Company;
+use JMS\Serializer\Serializer;
 use App\Repository\CompanyRepository;
+use JMS\Serializer\SerializerInterface;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Response;
+use JMS\Serializer\SerializationContext;
+use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Component\HttpFoundation\Request;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 
 
 class CompanyController extends AbstractController
@@ -29,12 +33,25 @@ class CompanyController extends AbstractController
     #[Route('/api/companies', name: 'company.getAll', methods:['GET'])]
     public function getAllCompanies(
         CompanyRepository $repository,
-        SerializerInterface $serializer
+        SerializerInterface $serializer,
+        Request $request,
+        TagAwareCacheInterface $cache
     ) : JsonResponse
     {
-        $companies = $repository->findAll();
-        $jsonCompanies = $serializer->serialize($companies, 'json');
-        return new JsonResponse($jsonCompanies, Response::HTTP_OK, [], true);
+        $page = $request->get('page', 1);
+        $limit = $request->get('limit', 5);
+        $limit = $limit > 20 ? 20 : $limit;
+
+        $idCache = 'getAllCompanies';
+        $jsonProfessionals = $cache->get($idCache, function (ItemInterface $item) use ($repository, $serializer, $page, $limit) {
+            echo "MISE EN CACHE";
+            $item->tag("companiesCache");
+            $companies = $repository->findWithPagination($page, $limit);
+            $context = SerializationContext::create()->setGroups(['getAllCompanies']);
+            return $serializer->serialize($companies, 'json', $context);
+        });
+       
+        return new JsonResponse($jsonProfessionals, Response::HTTP_OK, [], true);
     }
 
     #[Route('/api/companies/{idCompany}', name: 'company.get', methods: ['GET'])]
@@ -47,14 +64,16 @@ class CompanyController extends AbstractController
         return new JsonResponse($serializer->serialize($company, 'json'), Response::HTTP_OK, ['accept' => 'json'], true);
     }
 
-    #[Route('/api/companies/{idCompany}', name: 'company.delete', methods: ['METHODE'])]
+    #[Route('/api/companies/{idCompany}', name: 'company.delete', methods: ['DELETE'])]
     #[ParamConverter("company", options: ['id' => 'idCompany'], class: 'App\Entity\Company')]
-    public function deleteCompany
-    (
+    public function deleteCompany(
         Company $company,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        TagAwareCacheInterface $cache
     ) : JsonResponse
     {
+        $cache->invalidateTags(["companiesCache"]);
+
         $entityManager->remove($company);
         $entityManager->flush();
         return new JsonResponse(null, JsonResponse::HTTP_NO_CONTENT);
@@ -65,9 +84,12 @@ class CompanyController extends AbstractController
         Request $request,
         EntityManagerInterface $entityManager,
         SerializerInterface $serializer,
-        UrlGeneratorInterface $urlGenerator
+        UrlGeneratorInterface $urlGenerator,
+        TagAwareCacheInterface $cache
     ) : JsonResponse
     {
+        $cache->invalidateTags(["companiesCache"]);
+
         $company = $serializer->deserialize($request->getContent(), Company::class, 'json');
         $company->setStatus('on');
         $company->setNoteCount(0);

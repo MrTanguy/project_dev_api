@@ -4,8 +4,22 @@ namespace App\Entity;
 
 use App\Repository\CompanyRepository;
 use Doctrine\ORM\Mapping as ORM;
+use JMS\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Asset;
 
+use Hateoas\Configuration\Annotation as Hateoas;
+/**
+ * @Hateoas\Relation(
+ *    "self",
+ *    href=@Hateoas\Route(
+ *         "company.get",
+ *         parameters={
+ *             "idCompany" = "expr(object.getId())"
+ *         }
+ *    ),
+ *    exclusion = @Hateoas\Exclusion(groups="getAllCompanies")
+ * )
+ */
 
 #[ORM\Entity(repositoryClass: CompanyRepository::class)]
 class Company
@@ -13,20 +27,25 @@ class Company
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(["getCompany", "getAllCompanies"])]
     private ?int $id = null;
 
     #[Asset\NotBlank(message: "Une company doit avoir un nom")]
     #[ORM\Column(length: 255)]
+    #[Groups(["getCompany", "getAllCompanies"])]
     private ?string $name = null;
 
     #[Asset\NotBlank(message: "Un job doit avoir un nom")]
     #[ORM\Column(length: 255)]
+    #[Groups(["getCompany", "getAllCompanies"])]
     private ?string $job = null;
 
     #[ORM\Column(length: 50)]
+    #[Groups(["getCompany", "getAllCompanies"])]
     private ?string $status = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(["getCompany", "getAllCompanies"])]
     private ?float $noteAvg = null;
 
     public function getId(): ?int

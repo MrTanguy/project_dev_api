@@ -47,30 +47,18 @@ class ProfessionalController extends AbstractController
         TagAwareCacheInterface $cache
     ) : JsonResponse
     {
-        /*
         $page = $request->get('page', 1);
         $limit = $request->get('limit', 5);
         $limit = $limit > 20 ? 20 : $limit;
 
-
-        $professionals = $repository->findWithPagination($page, $limit);
-        $jsonProfessionals = $serializer->serialize($professionals, 'json');
-        return new JsonResponse($jsonProfessionals, Response::HTTP_OK, [], true);
-        */
-
-        // $idCache = 'getAllProfessionals';
-        // $jsonProfessionals = $cache->get($idCache, function (ItemInterface $item) use ($repository, $serializer) {
-        //     echo "MISE EN CACHE";
-        //     $item->tag("professionalCache");
-        //     $professionals = $repository->findAll();
-        //     $context = SerializationContext::create()->setGroups(['getAllProfessionals']);
-        //     return $serializer->serialize($professionals, 'json', $context);
-        // });
-
-
-        $professionals = $repository->findAll();
-        $context = SerializationContext::create()->setGroups(['getAllProfessionals']);
-        $jsonProfessionals = $serializer->serialize($professionals, 'json', $context);
+        $idCache = 'getAllProfessionals';
+        $jsonProfessionals = $cache->get($idCache, function (ItemInterface $item) use ($repository, $serializer, $page, $limit) {
+            echo "MISE EN CACHE";
+            $item->tag("professionalCache");
+            $professionals = $repository->findWithPagination($page, $limit);
+            $context = SerializationContext::create()->setGroups(['getAllProfessionals']);
+            return $serializer->serialize($professionals, 'json', $context);
+        });
        
         return new JsonResponse($jsonProfessionals, Response::HTTP_OK, [], true);
     }
@@ -87,7 +75,7 @@ class ProfessionalController extends AbstractController
         return new JsonResponse($jsonProfessional, Response::HTTP_OK, ['accept' => 'json'], true);
     }
 
-    #[Route('/api/professionals/{idProfessional}', name: 'professional.delete', methods: ['METHODE'])]
+    #[Route('/api/professionals/{idProfessional}', name: 'professional.delete', methods: ['DELETE'])]
     #[ParamConverter("professional", options: ['id' => 'idProfessional'], class: 'App\Entity\Professional')]
     #[IsGranted('ROLE_ADMIN', message: "Hanhanhan vous n'avez pas dit le mot magiqueuuuh")]
     public function deleteProfesional(
@@ -105,8 +93,7 @@ class ProfessionalController extends AbstractController
     
     #[Route('/api/professionals', name: 'professional.create', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN', message: "Hanhanhan vous n'avez pas dit le mot magiqueuuuh")]
-    public function createProfessional
-    (
+    public function createProfessional(
         Request $request,
         EntityManagerInterface $entityManager,
         CompanyRepository $companyRepository,
@@ -156,7 +143,6 @@ class ProfessionalController extends AbstractController
     {
         $cache->invalidateTags(["professionalCache"]);
 
-        #$professional = $serializer->deserialize($request->getContent(), Professional::class, 'json', [AbstractNormalizer::OBJECT_TO_POPULATE => $professional]);
         $updatedProfessional = $serializer->deserialize($request->getContent(), Professional::class, 'json', );
         
         $professional->setFirstname($updatedProfessional->getFirstname() ? $updatedProfessional->getFirstname() : $professional->getFirstname());
@@ -206,6 +192,7 @@ class ProfessionalController extends AbstractController
         # incrémentation de la variable NoteCount car une note est rajouté
         $professional->setNoteCount($professional->getNoteCount()+1);
         
+        ///////////////////////
         $proCompanyId = $professional->getCompanyJobId();
         $company= $companyRepository->findOneBy(['id' => $proCompanyId]);
 
@@ -220,10 +207,11 @@ class ProfessionalController extends AbstractController
         # calcul de la nouvelle moyenne de l'entreprise
         $companyEmployeeNoteAvg = round(array_sum($companyEmployeeNoteList)/count($companyEmployeeNoteList), 1);
         $company->setNoteAvg($companyEmployeeNoteAvg);
+        $entityManager->persist($company);
+        ///////////////////////
 
         # persist + flush pour mettre à jour la table
         $entityManager->persist($professional);
-        $entityManager->persist($company);
         $entityManager->flush();
 
         $location = $urlGenerator->generate('professional.get', ["idProfessional" => $professional->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
@@ -270,5 +258,9 @@ class ProfessionalController extends AbstractController
         $job = str_replace("_", " ", $job);
         $professionals = $professionalRepository->findBy(['job' => $job], ['noteAvg' => 'DESC']);
         return new JsonResponse($serializer->serialize($professionals, 'json'), Response::HTTP_OK, ['accept' => 'json'], true);
+    }
+
+    public function updateCompanyAvgNote() {
+        
     }
 }
