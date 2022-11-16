@@ -8,18 +8,6 @@ use JMS\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Asset;
 
 use Hateoas\Configuration\Annotation as Hateoas;
-/**
- * @Hateoas\Relation(
- *    "self",
- *    href=@Hateoas\Route(
- *         "professional.get",
- *         parameters={
- *             "idProfessional" = "expr(object.getId())"
- *         }
- *    ),
- *    exclusion = @Hateoas\Exclusion(groups="getAllProfessionals")
- * )
- */
 
 #[ORM\Entity(repositoryClass: ProfessionalRepository::class)]
 class Professional

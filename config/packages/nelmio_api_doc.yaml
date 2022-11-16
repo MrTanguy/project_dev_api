@@ -12,8 +12,37 @@ nelmio_api_doc:
           scheme: bearer
           bearerFormat: JWT
           in: header
+      schemas:
+        postNewUpdateProfessional:
+          type: object
+          properties:
+            firstname:
+              type: string
+              example: James
+            lastname:
+              type: string
+              example: Bond
+            job:
+              type: string
+              example: Agent Secret
+            company_job_id:
+              type: int
+              example: 007
+            noteCount:
+              type: int
+              example: 0
+            NoteAvg:
+              type: int
+              example: 0
+        postAddNoteProfessional:
+          type: object
+          properties:
+            note:
+              type: int
+              example: 7
     security:
       - Bearer: []
+
  
     paths:
       /api/login_check:

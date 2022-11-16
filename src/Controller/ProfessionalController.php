@@ -28,49 +28,27 @@ use JMS\Serializer\Serializer;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\Annotation\Groups;
 use Nelmio\ApiDocBundle\Annotation\Model;
-use OpenApi\Annotations as OA;
+use OpenApi\Attributes as OA;
 
-/**
- * @OA\Tag(name="Professional")
- */
+
+#[OA\Tag(name: 'Professional')]
 class ProfessionalController extends AbstractController
 {
-    /**
-    * List the rewards of the specified user.
-    *
-    * This call takes into account all confirmed awards, but not pending or refused awards.
-    */
-
-    #[Route('/professional', name: 'app_professional')]
-    public function index(): JsonResponse
-    {
-        return $this->json([
-            'message' => 'Welcome to your new test controller!',
-            'path' => 'src/Controller/ProfessionalController.php',
-        ]);
-    }
 
     /**
-     * Return l'ensemble des professionels.
-     * 
-     * @OA\Response(
-     *      response=200,
-     *      description="Retourne l'ensemble des professionels",
-     *      @OA\JsonContent(
-     *          type="array",
-     *          @OA\Items(example=@Model(type=Professional::class, groups={"getAllChallenges"}))
-     *      )
-     * )
-     * 
-     * 
+     * Return all professionals sorted by id
+     *
      * @param ProfessionalRepository $repository
      * @param SerializerInterface $serializer
      * @param Request $request
      * @param TagAwareCacheInterface $cache
      * @return JsonResponse
-     * 
      */
-    #@OA\Items(example=@Model(type=Challenge::class, groups={"getAllChallenges"}))
+    #[OA\Response(
+        response: 200,
+        description: '',
+        content: new Model(type: Professional::class)
+    )]
     #[Route('/api/professionals', name: 'professional.getAll', methods:['GET'])]
     public function getAllProfessionals(
         ProfessionalRepository $repository,
@@ -95,6 +73,20 @@ class ProfessionalController extends AbstractController
         return new JsonResponse($jsonProfessionals, Response::HTTP_OK, [], true);
     }
 
+
+
+    /**
+     * Return the professional matching a specific id
+     * 
+     * @param ProfessionalRepository $repository
+     * @param SerializerInterface $serializer
+     * @return JsonResponse
+     */
+    #[OA\Response(
+        response: 200,
+        description: 'Successful response',
+        content: new Model(type: Professional::class)
+    )]
     #[Route('/api/professionals/{idProfessional}', name: 'professional.get', methods: ['GET'])]
     #[ParamConverter("professional", options: ['id' => 'idProfessional'], class:'App\Entity\Professional')]
     public function getProfessionals(
@@ -107,9 +99,23 @@ class ProfessionalController extends AbstractController
         return new JsonResponse($jsonProfessional, Response::HTTP_OK, ['accept' => 'json'], true);
     }
 
+
+
+    /**
+     * Delete the professional matching a specific id
+     * 
+     * @param ProfessionalRepository $repository
+     * @param EntityManagerInterface $entityManager
+     * @param TagAwareCacheInterface $cache
+     * @return JsonResponse
+     */
+    #[OA\Response(
+        response: 200,
+        description: 'The professional have been succesfully deleted'
+    )]
     #[Route('/api/professionals/{idProfessional}', name: 'professional.delete', methods: ['DELETE'])]
     #[ParamConverter("professional", options: ['id' => 'idProfessional'], class: 'App\Entity\Professional')]
-    #[IsGranted('ROLE_ADMIN', message: "Hanhanhan vous n'avez pas dit le mot magiqueuuuh")]
+    #[IsGranted('ROLE_ADMIN', message: "Admin rights needed.")]
     public function deleteProfesional(
         Professional $professional,
         EntityManagerInterface $entityManager,
@@ -123,12 +129,37 @@ class ProfessionalController extends AbstractController
     }
 
     
+
+    /**
+     * Create a new professional with a json file given as a body parameter
+     * 
+     * @param Request $request
+     * @param EntityManagerInterface $entityManager
+     * @param SerializerInterface $serializer
+     * @param ValidatorInterface $validator
+     * @param UrlGeneratorInterface $urlGenerator
+     * @param TagAwareCacheInterface $cache
+     * @return JsonResponse
+     */
+    #[OA\Response(
+        response: 200,
+        description: '',
+        content: new Model(type: Professional::class)
+    )]
+    #[OA\RequestBody(
+        request: 'professional.create',
+        description: 'Professional json object that will be used to create a new professional in the database, all properties are needed',
+        required: true,
+        content: new OA\JsonContent(
+            type: 'object',
+            ref: '#/components/schemas/postNewUpdateProfessional'
+        )
+    )]
     #[Route('/api/professionals', name: 'professional.create', methods: ['POST'])]
-    #[IsGranted('ROLE_ADMIN', message: "Hanhanhan vous n'avez pas dit le mot magiqueuuuh")]
+    #[IsGranted('ROLE_ADMIN', message: "You need the admin role to update a professional")]
     public function createProfessional(
         Request $request,
         EntityManagerInterface $entityManager,
-        CompanyRepository $companyRepository,
         SerializerInterface $serializer,
         ValidatorInterface $validator,
         UrlGeneratorInterface $urlGenerator,
@@ -160,9 +191,39 @@ class ProfessionalController extends AbstractController
         return new JsonResponse($jsonProfessional, JsonResponse::HTTP_CREATED, ["Location" => $location], true);
     }
 
+
+    /**
+     * Update the professional (id) according to the json file given as parameter
+     *
+     * @param Professional $professional
+     * @param Request $request
+     * @param EntityManagerInterface $entityManager
+     * @param SerializerInterface $serializer
+     * @param UrlGeneratorInterface $urlGenerator
+     * @param TagAwareCacheInterface $cache
+     * @return JsonResponse
+     */  
+    #[OA\Response(
+        response: 200,
+        description: 'Update the professional (id) according to the json file given as parameter',
+        content: new Model(type : Professional::class)
+    )]
+    #[OA\Response(
+        response: 500,
+        description: '"Could not decode JSON, syntax error - malformed JSON."'
+    )]
+    #[OA\RequestBody(
+        request: 'professional.update',
+        description: 'Professional json object that will be used to update the database, all properties aren\'t needed, send only one used.',
+        required: true,
+        content: new OA\JsonContent(
+            type: 'object',
+            ref: '#/components/schemas/postNewUpdateProfessional'
+        )
+    )]
     #[Route('/api/professionals/{idProfessional}', name: 'professional.update', methods: ['PUT'])]
     #[ParamConverter("professional", options: ['id' => 'idProfessional'], class: 'App\Entity\Professional')]
-    #[IsGranted('ROLE_ADMIN', message: "Hanhanhan vous n'avez pas dit le mot magiqueuuuh")]
+    #[IsGranted('ROLE_ADMIN', message: "You need the admin role to create a professional")]
     public function updateProfessional
     (
         Professional $professional,
@@ -197,7 +258,33 @@ class ProfessionalController extends AbstractController
         return new JsonResponse($jsonProfessional, JsonResponse::HTTP_CREATED, ["Location" => $location], true);
     }
 
-
+    /**
+     * Add a new note to the professional
+     *
+     * @param Request $request
+     * @param Professional $professional
+     * @param EntityManagerInterface $entityManager
+     * @param UrlGeneratorInterface $urlGenerator
+     * @param SerializerInterface $serializer
+     * @param ProfessionalRepository $professionalRepository
+     * @param CompanyRepository $companyRepository
+     * @param TagAwareCacheInterface $cache
+     * @return JsonResponse
+     */ 
+    #[OA\Response(
+        response: 200,
+        description: 'Add a new note to NoteCount, update Note',
+        content: new Model(type : Professional::class)
+    )]
+    #[OA\RequestBody(
+        request: 'professional.addNote',
+        description: 'The note added is in the json given as parameter, the note must be between 0 and 10',
+        required: true,
+        content: new OA\JsonContent(
+            type: 'object',
+            ref: '#/components/schemas/postAddNoteProfessional'
+        )
+    )]
     #[Route('/api/professionals/note/{idProfessional}', name: 'professional.addNote', methods: ['POST'])]
     #[ParamConverter("professional", options: ['id' => 'idProfessional'], class:'App\Entity\Professional')]
     public function addNoteProfessionals(
@@ -224,7 +311,7 @@ class ProfessionalController extends AbstractController
         # incrémentation de la variable NoteCount car une note est rajouté
         $professional->setNoteCount($professional->getNoteCount()+1);
         
-        ///////////////////////
+
         $proCompanyId = $professional->getCompanyJobId();
         $company= $companyRepository->findOneBy(['id' => $proCompanyId]);
 
@@ -240,7 +327,6 @@ class ProfessionalController extends AbstractController
         $companyEmployeeNoteAvg = round(array_sum($companyEmployeeNoteList)/count($companyEmployeeNoteList), 1);
         $company->setNoteAvg($companyEmployeeNoteAvg);
         $entityManager->persist($company);
-        ///////////////////////
 
         # persist + flush pour mettre à jour la table
         $entityManager->persist($professional);
@@ -253,7 +339,20 @@ class ProfessionalController extends AbstractController
         return new JsonResponse($jsonProfessional, JsonResponse::HTTP_CREATED, ["Location" => $location], true);
     }
     
-    // Récupère la note du professionnel.
+
+
+    /**
+     * Return the the number of note (NoteCount) and the note average (NoteAvg) of the professional, id given as a query parameter
+     *
+     * @param Professional $professional
+     * @param SerializerInterface $serializer
+     * @return JsonResponse
+     */  
+    #[OA\Response(
+        response: 200,
+        description: 'Update the professional (id) according to the json file given as parameter',
+        content: new Model(type : Professional::class)
+    )]
     #[Route('/api/professionals/note/{idProfessional}', name: 'professional.getNote', methods: ['GET'])]
     #[ParamConverter("professional", options: ['id' => 'idProfessional'], class:'App\Entity\Professional')]
     public function getNoteProfessionals(
@@ -268,7 +367,20 @@ class ProfessionalController extends AbstractController
         return new JsonResponse($serializer->serialize([$note, $noteCount], 'json'), Response::HTTP_OK, ['accept' => 'json'], true);
     }
     
-    // Récupère la liste des professionnels de l'entreprise classé par note.
+
+
+    /**
+     * Return all professionals of a company ordered by note.
+     *
+     * @param ProfessionalRepository $professionalRepository
+     * @param SerializerInterface $serializer
+     * @return JsonResponse
+     */  
+    #[OA\Response(
+        response: 200,
+        description: '',
+        content: new Model(type : Professional::class)
+    )]
     #[Route('/api/professionals/company/{idCompany}', name: 'professional.getByCompany', methods: ['GET'])]
     public function getProfessionalsByCompany(
         ProfessionalRepository $professionalRepository,
@@ -280,7 +392,21 @@ class ProfessionalController extends AbstractController
         return new JsonResponse($serializer->serialize($professionals, 'json'), Response::HTTP_OK, ['accept' => 'json'], true);
     }
     
+
+
     // Récupère la liste des professionnels exercant un job classé par note.
+    /**
+     * Return all professionals having a special job, ordered by note.
+     *
+     * @param ProfessionalRepository $professionalRepository
+     * @param SerializerInterface $serializer
+     * @return JsonResponse
+     */  
+    #[OA\Response(
+        response: 200,
+        description: '',
+        content: new Model(type : Professional::class)
+    )]
     #[Route('/api/professionals/job/{job}', name: 'professional.getByJob', methods: ['GET'])]
     public function getProfessionalsByJob(
         ProfessionalRepository $professionalRepository,
