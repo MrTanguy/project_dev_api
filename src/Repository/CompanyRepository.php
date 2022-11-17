@@ -3,8 +3,9 @@
 namespace App\Repository;
 
 use App\Entity\Company;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\ORM\Query\ResultSetMappingBuilder;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 
 /**
  * @extends ServiceEntityRepository<Company>
@@ -73,4 +74,25 @@ class CompanyRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult(); 
     }
 
+    /**
+     * @return Company[] Returns an array of Company objects
+     */
+    public function findNearestCompanyByJob($lat, $lon, $job, $limit)
+    {       
+        $rsm = new ResultSetMappingBuilder($this->getEntityManager());
+        $rsm->addRootEntityFromClassMetadata(Company::class, 'company');
+        $query = $this->getEntityManager()->createNativeQuery(
+            'SELECT * 
+            FROM `company` 
+            WHERE company.status = "on" AND company.job = :job
+            ORDER BY (6378 * acos(cos(radians(:latitude)) * cos(radians(company.lat)) * cos(radians(company.lon) - radians(:longitude)) + sin(radians(:latitude)) * sin(radians(company.lat))))
+            LIMIT :limitValue',
+            $rsm
+        );
+        $query->setParameter('latitude', $lat);
+        $query->setParameter('longitude', $lon);
+        $query->setParameter('job', $job);
+        $query->setParameter('limitValue', $limit);
+        return $query->getResult();
+    }
 }

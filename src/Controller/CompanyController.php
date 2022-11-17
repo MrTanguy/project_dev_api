@@ -57,6 +57,32 @@ class CompanyController extends AbstractController
         return new JsonResponse($jsonProfessionals, Response::HTTP_OK, [], true);
     }
 
+    #[Route('/api/companies/near', name: 'company.getNearest', methods: ['GET'])]
+    public function getNearestCompanies(
+        Request $request,
+        SerializerInterface $serializer,
+        companyRepository $companyRepository,
+        TagAwareCacheInterface $cache
+    ) : JsonResponse
+    {
+        $lat = $request->get('lat');
+        $lon = $request->get('lon');
+        if (empty($lat) || empty($lon)) {
+            return new JsonResponse("Vous devez renseigner une latitude (lat) et une longitude (lon).", Response::HTTP_BAD_REQUEST);
+        }
+        if (!is_numeric($lat) || !is_numeric($lon) || $lat < -90 || $lat > 90 || $lon < -180 || $lon > 180) {
+            return new JsonResponse("La latitude doit être une valeur numérique comprise entre -90 et 90 et la longitude doit être une valeur numérique comprise entre -180 et 180.", Response::HTTP_BAD_REQUEST);
+        }
+        $job = $request->get('job');
+        $limit = intval($request->get('limit', 5));
+
+        $companies = $companyRepository->findNearestCompanyByJob($lat, $lon, $job, $limit);
+        $context = SerializationContext::create()->setGroups(['getCompany']);
+        $jsonNearestCompanies = $serializer->serialize($companies, 'json', $context);
+
+        return new JsonResponse($jsonNearestCompanies, Response::HTTP_OK, ['accept' => 'json'], true);
+    }
+
     #[Route('/api/companies/{idCompany}', name: 'company.get', methods: ['GET'])]
     #[ParamConverter("company", options: ['id' => 'idCompany'], class:'App\Entity\Company')]
     public function getCompanies(
@@ -75,7 +101,7 @@ class CompanyController extends AbstractController
         TagAwareCacheInterface $cache
     ) : JsonResponse
     {
-        $cache->invalidateTags(["companiesCache"]);
+        $cache->invalidateTags(["companiesCache", "nearestCompaniesCache"]);
 
         $entityManager->remove($company);
         $entityManager->flush();
@@ -91,7 +117,7 @@ class CompanyController extends AbstractController
         TagAwareCacheInterface $cache
     ) : JsonResponse
     {
-        $cache->invalidateTags(["companiesCache"]);
+        $cache->invalidateTags(["companiesCache", "nearestCompaniesCache"]);
 
         $company = $serializer->deserialize($request->getContent(), Company::class, 'json');
         $company->setStatus('on');

@@ -48,6 +48,16 @@ class Company
     #[Groups(["getCompany", "getAllCompanies"])]
     private ?float $noteAvg = null;
 
+    #[Asset\NotBlank(message: "La latitude est obligatoire")]
+    #[ORM\Column]
+    #[Groups(["getCompany", "getAllCompanies"])]
+    private ?float $lat = null;
+
+    #[Asset\NotBlank(message: "La longitude est obligatoire")]
+    #[ORM\Column]
+    #[Groups(["getCompany", "getAllCompanies"])]
+    private ?float $lon = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -97,6 +107,30 @@ class Company
     public function setNoteAvg(?float $noteAvg): self
     {
         $this->noteAvg = $noteAvg;
+
+        return $this;
+    }
+
+    public function getLat(): ?float
+    {
+        return $this->lat;
+    }
+
+    public function setLat(float $lat): self
+    {
+        $this->lat = $lat;
+
+        return $this;
+    }
+
+    public function getLon(): ?float
+    {
+        return $this->lon;
+    }
+
+    public function setLon(float $lon): self
+    {
+        $this->lon = $lon;
 
         return $this;
     }
