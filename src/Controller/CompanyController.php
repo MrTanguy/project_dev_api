@@ -128,8 +128,8 @@ class CompanyController extends AbstractController
         $entityManager->flush();
 
         $location = $urlGenerator->generate('company.get', ["idCompany" => $company->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
-
-        $jsonCompany = $serializer->serialize($company, 'json', ['getCompany']);
+        $context = SerializationContext::create()->setGroups(['getCompany']);
+        $jsonCompany = $serializer->serialize($company, 'json', $context);
         return new JsonResponse($jsonCompany, JsonResponse::HTTP_CREATED, ["Location" => $location], true);
     }
 
