@@ -223,9 +223,8 @@ class ProfessionalController extends AbstractController
     )]
     #[Route('/api/professionals/{idProfessional}', name: 'professional.update', methods: ['PUT'])]
     #[ParamConverter("professional", options: ['id' => 'idProfessional'], class: 'App\Entity\Professional')]
-    #[IsGranted('ROLE_ADMIN', message: "You need the admin role to create a professional")]
-    public function updateProfessional
-    (
+    #[IsGranted('ROLE_ADMIN', message: "You need the admin role to modify a professional")]
+    public function updateProfessional(
         Professional $professional,
         Request $request,
         EntityManagerInterface $entityManager,
@@ -236,7 +235,7 @@ class ProfessionalController extends AbstractController
     {
         $cache->invalidateTags(["professionalCache"]);
 
-        $updatedProfessional = $serializer->deserialize($request->getContent(), Professional::class, 'json', );
+        $updatedProfessional = $serializer->deserialize($request->getContent(), Professional::class, 'json');
         
         $professional->setFirstname($updatedProfessional->getFirstname() ? $updatedProfessional->getFirstname() : $professional->getFirstname());
         $professional->setLastname($updatedProfessional->getLastname() ? $updatedProfessional->getLastname() : $professional->getLastname());
@@ -310,23 +309,6 @@ class ProfessionalController extends AbstractController
         
         # incrémentation de la variable NoteCount car une note est rajouté
         $professional->setNoteCount($professional->getNoteCount()+1);
-        
-
-        $proCompanyId = $professional->getCompanyJobId();
-        $company= $companyRepository->findOneBy(['id' => $proCompanyId]);
-
-        # Récupération de la liste des employés de la même entreprise que l'employé noté
-        $companyEmployeeList = $professionalRepository->findBy(['company_job_id' => $proCompanyId]);
-        # Récupération des notes moyennes de tout les employés
-        $companyEmployeeNoteList = [];
-        foreach($companyEmployeeList as $employee)
-        {
-            $companyEmployeeNoteList[] = $employee->getNoteAvg();
-        }
-        # calcul de la nouvelle moyenne de l'entreprise
-        $companyEmployeeNoteAvg = round(array_sum($companyEmployeeNoteList)/count($companyEmployeeNoteList), 1);
-        $company->setNoteAvg($companyEmployeeNoteAvg);
-        $entityManager->persist($company);
 
         # persist + flush pour mettre à jour la table
         $entityManager->persist($professional);

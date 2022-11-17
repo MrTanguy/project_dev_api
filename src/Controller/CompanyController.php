@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Company;
 use JMS\Serializer\Serializer;
+use OpenApi\Annotations as OA;
 use App\Repository\CompanyRepository;
 use JMS\Serializer\SerializerInterface;
 use Doctrine\ORM\EntityManagerInterface;
@@ -15,9 +16,9 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
-use OpenApi\Annotations as OA;
 
 /**
  * @OA\Tag(name="Company")
@@ -75,12 +76,51 @@ class CompanyController extends AbstractController
         }
         $job = $request->get('job');
         $limit = intval($request->get('limit', 5));
-
-        $companies = $companyRepository->findNearestCompanyByJob($lat, $lon, $job, $limit);
-        $context = SerializationContext::create()->setGroups(['getCompany']);
-        $jsonNearestCompanies = $serializer->serialize($companies, 'json', $context);
+        
+        $idCache = 'getNearestCompanies';
+        $jsonNearestCompanies = $cache->get($idCache, function (ItemInterface $item) use ($companyRepository, $serializer, $lat, $lon, $job, $limit) {
+            echo "MISE EN CACHE";
+            $item->tag("nearCompaniesCache");
+            $companies = $companyRepository->findNearestCompanyByJob($lat, $lon, $job, $limit);
+            $context = SerializationContext::create()->setGroups(['getCompany']);
+            return $serializer->serialize($companies, 'json', $context);
+        });
 
         return new JsonResponse($jsonNearestCompanies, Response::HTTP_OK, ['accept' => 'json'], true);
+    }
+
+    #[Route('/api/companies/{idCompany}', name: 'company.update', methods: ['PUT'])]
+    #[ParamConverter("company", options: ['id' => 'idCompany'], class: 'App\Entity\Company')]
+    #[IsGranted('ROLE_ADMIN', message: "You need the admin role to modify a company.")]
+    public function modifyCompany(
+        TagAwareCacheInterface $cache,
+        Request $request,
+        SerializerInterface $serializer,
+        EntityManagerInterface $entityManager,
+        UrlGeneratorInterface $urlGenerator,
+        Company $company
+    ) : JsonResponse
+    {
+        $cache->invalidateTags(["companiesCache"]);
+
+        $updatedCompany = $serializer->deserialize($request->getContent(), Company::class, 'json');
+
+        $company->setName($updatedCompany->getName() ? $updatedCompany->getName() : $company->getName());
+        $company->setJob($updatedCompany->getJob() ? $updatedCompany->getJob() : $company->getJob());
+        $company->setLat($updatedCompany->getLat() ? $updatedCompany->getLat() : $company->getLat());
+        $company->setLon($updatedCompany->getLon() ? $updatedCompany->getLon() : $company->getLon());
+
+        $company->setStatus('on');
+
+        $entityManager->persist($company);
+        $entityManager->flush();
+
+        $location = $urlGenerator->generate("company.get", ["idCompany" => $company->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
+        
+        $context = SerializationContext::create()->setGroups(["getCompany"]);
+
+        $jsonCompany = $serializer->serialize($$company, "json", $context);
+        return new JsonResponse($jsonCompany, JsonResponse::HTTP_CREATED, ["Location" => $location], true);
     }
 
     #[Route('/api/companies/{idCompany}', name: 'company.get', methods: ['GET'])]
@@ -134,16 +174,16 @@ class CompanyController extends AbstractController
     }
 
     // Récupère la note de l'entreprise.
-    #[Route('/api/companies/note/{idCompany}', name: ' company.getNote', methods: ['GET'])]
-    #[ParamConverter("company", options: ['id' => 'idCompany'], class:'App\Entity\Company')]
-    public function getNoteProfessionals(
-        Company $company,
-        SerializerInterface $serializer
-    ) : JsonResponse
-    {
-        //Récupération de la note moyenne
-        $note = $company->getNoteAvg();
+    // #[Route('/api/companies/note/{idCompany}', name: ' company.getNote', methods: ['GET'])]
+    // #[ParamConverter("company", options: ['id' => 'idCompany'], class:'App\Entity\Company')]
+    // public function getNoteProfessionals(
+    //     Company $company,
+    //     SerializerInterface $serializer
+    // ) : JsonResponse
+    // {
+    //     //Récupération de la note moyenne
+    //     $note = $company->getNoteAvg();
 
-        return new JsonResponse($serializer->serialize($note, 'json'), Response::HTTP_OK, ['accept' => 'json'], true);
-    }
+    //     return new JsonResponse($serializer->serialize($note, 'json'), Response::HTTP_OK, ['accept' => 'json'], true);
+    // }
 }

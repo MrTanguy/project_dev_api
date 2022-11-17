@@ -44,10 +44,6 @@ class Company
     #[Groups(["getCompany", "getAllCompanies"])]
     private ?string $status = null;
 
-    #[ORM\Column(nullable: true)]
-    #[Groups(["getCompany", "getAllCompanies"])]
-    private ?float $noteAvg = null;
-
     #[Asset\NotBlank(message: "La latitude est obligatoire")]
     #[ORM\Column]
     #[Groups(["getCompany", "getAllCompanies"])]
@@ -95,18 +91,6 @@ class Company
     public function setStatus(string $status): self
     {
         $this->status = $status;
-
-        return $this;
-    }
-
-    public function getNoteAvg(): ?float
-    {
-        return $this->noteAvg;
-    }
-
-    public function setNoteAvg(?float $noteAvg): self
-    {
-        $this->noteAvg = $noteAvg;
 
         return $this;
     }
