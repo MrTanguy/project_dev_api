@@ -25,15 +25,6 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
  */
 class CompanyController extends AbstractController
 {
-    #[Route('/company', name: 'app_company')]
-    public function index(): JsonResponse
-    {
-        return $this->json([
-            'message' => 'Welcome to your new controller!',
-            'path' => 'src/Controller/CompanyController.php',
-        ]);
-    }
-
     #[Route('/api/companies', name: 'company.getAll', methods:['GET'])]
     public function getAllCompanies(
         CompanyRepository $repository,

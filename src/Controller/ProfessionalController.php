@@ -4,23 +4,21 @@ namespace App\Controller;
 
 use App\Entity\Company;
 use App\Entity\Professional;
+use App\Repository\ProfessionalRepository;
+use App\Repository\CompanyRepository;
 use Doctrine\ORM\EntityManager;
 use Doctrine\DBAL\Types\StringType;
-use App\Repository\CompanyRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use App\Repository\ProfessionalRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
-#use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
-#use Symfony\Component\Serializer\Serializer;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use JMS\Serializer\SerializerInterface;
@@ -36,7 +34,7 @@ class ProfessionalController extends AbstractController
 {
 
     /**
-     * Return all professionals sorted by id
+     * Return all professionals sorted by id with pagination
      *
      * @param ProfessionalRepository $repository
      * @param SerializerInterface $serializer
