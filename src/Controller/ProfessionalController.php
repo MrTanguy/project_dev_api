@@ -292,8 +292,4 @@ class ProfessionalController extends AbstractController
         $professionals = $professionalRepository->findBy(['job' => $job], ['noteAvg' => 'DESC']);
         return new JsonResponse($serializer->serialize($professionals, 'json'), Response::HTTP_OK, ['accept' => 'json'], true);
     }
-
-    public function updateCompanyAvgNote() {
-        
-    }
 }

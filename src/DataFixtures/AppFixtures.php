@@ -66,7 +66,9 @@ class AppFixtures extends Fixture
             $company->setName($this->faker->company())
             ->setJob($job)
             ->setStatus('on')
-            ->setNoteAvg(rand(1, 100)/10);
+            ->setNoteAvg(rand(1, 100)/10)
+            ->setLat($this->faker->latitude())
+            ->setLon($this->faker->longitude());
             $manager->persist($company);
             $listCompany[$job] = $company;
         }
