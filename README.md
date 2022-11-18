@@ -1,6 +1,6 @@
 [![Generic badge](https://img.shields.io/badge/Type-API-green.svg)](https://shields.io/) 
 [![Generic badge](https://img.shields.io/badge/Language-php_8.1-blue.svg)](https://shields.io/)
-[![Generic badge](https://img.shields.io/badge/Language-symfony_6.1-purple.svg)](https://shields.io/)
+[![Generic badge](https://img.shields.io/badge/Framework-symfony_6.1-purple.svg)](https://shields.io/)
 
 # Find Professional API
 
@@ -71,5 +71,5 @@ Once your local server is running go on
 ## Authors
 
 - [@MrTanguy](https://github.com/MrTanguy)
-- [@HPOIZAT](https://www.github.com/https://github.com/HPOIZAT)
+- [@HPOIZAT](https://github.com/HPOIZAT)
 

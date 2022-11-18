@@ -56,20 +56,22 @@ class AppFixtures extends Fixture
         $listCompany = [];
 
 
-        for ($loop = 0 ; $loop < 4 ; $loop++)
+        for ($loop = 0 ; $loop < 10 ; $loop++)
         {
             // Définition d'un job
             $job = $this->faker->jobTitle();
 
             // Création d'une Company ayant pour activité le $job
-            $company = new Company();
-            $company->setName($this->faker->company())
-            ->setJob($job)
-            ->setStatus('on')
-            ->setLat($this->faker->latitude())
-            ->setLon($this->faker->longitude());
-            $manager->persist($company);
-            $listCompany[$job] = $company;
+            for ($i = 0; $i < 3; $i++) {
+                $company = new Company();
+                $company->setName($this->faker->company())
+                ->setJob($job)
+                ->setStatus('on')
+                ->setLat($this->faker->latitude())
+                ->setLon($this->faker->longitude());
+                $manager->persist($company);
+                $listCompany[$job] = $company;
+            }
         }
 
         // Création de 5 Professionels ayant pour activité $job
