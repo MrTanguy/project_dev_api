@@ -3,8 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Company;
-use JMS\Serializer\Serializer;
-use OpenApi\Annotations as OA;
+use OpenApi\Attributes as OA;
 use App\Repository\CompanyRepository;
 use JMS\Serializer\SerializerInterface;
 use Doctrine\ORM\EntityManagerInterface;
@@ -19,12 +18,39 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+use Nelmio\ApiDocBundle\Annotation\Model;
 
-/**
- * @OA\Tag(name="Company")
- */
+use function PHPSTORM_META\type;
+
+#[OA\Tag(name: 'Company')]
 class CompanyController extends AbstractController
 {
+    /**
+     * Return all companies sorted by id with pagination
+     *
+     * @param CompanyRepository $repository
+     * @param SerializerInterface $serializer
+     * @param Request $request
+     * @param TagAwareCacheInterface $cache
+     * @return JsonResponse
+     */
+    #[OA\Response(
+        response: 200,
+        description: '',
+        content: new Model(type: Company::class)
+    )]
+    #[OA\Parameter(
+        name: 'page',
+        in: 'query',
+        description: 'The page you want that the data come from. Exemple : 1',
+        schema: new OA\Schema(type: 'int', default: 1)
+    )]
+    #[OA\Parameter(
+        name: 'limit',
+        in: 'query',
+        description: 'The limit of result you want. Exemple: 5',
+        schema: new OA\Schema(type: 'int', default: 5)
+    )]
     #[Route('/api/companies', name: 'company.getAll', methods:['GET'])]
     public function getAllCompanies(
         CompanyRepository $repository,
@@ -49,6 +75,50 @@ class CompanyController extends AbstractController
         return new JsonResponse($jsonProfessionals, Response::HTTP_OK, [], true);
     }
 
+
+
+    /**
+     * Return all companies, from the closest to the farest according to your localisation.
+     *
+     * @param CompanyRepository $repository
+     * @param SerializerInterface $serializer
+     * @param Request $request
+     * @param TagAwareCacheInterface $cache
+     * @return JsonResponse
+     */
+    #[OA\Response(
+        response: 200,
+        description: '',
+        content: new Model(type: Company::class)
+    )]
+    #[OA\Response(
+        response: 400,
+        description: '"Vous devez renseigner une latitude (lat) et une longitude (lon)."'
+    )]
+    #[OA\Parameter(
+        name: 'lat',
+        in: 'query',
+        description: 'Your latitude.',
+        schema: new OA\Schema(type: 'float', default: 45.7465014)
+    )]
+    #[OA\Parameter(
+        name: 'lon',
+        in: 'query',
+        description: 'Your longitude',
+        schema: new OA\Schema(type: 'float', default: 4.8381741)
+    )]
+    #[OA\Parameter(
+        name: 'job',
+        in: 'query',
+        description: 'Name of the job',
+        schema: new OA\Schema(type: 'string', default: "Menuisier")
+    )]
+    #[OA\Parameter(
+        name: 'limit',
+        in: 'query',
+        description: 'The limit of result you want. Exemple: 5',
+        schema: new OA\Schema(type: 'int', default: 5)
+    )]
     #[Route('/api/companies/near', name: 'company.getNearest', methods: ['GET'])]
     public function getNearestCompanies(
         Request $request,

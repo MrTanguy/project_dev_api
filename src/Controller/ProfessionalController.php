@@ -2,12 +2,9 @@
 
 namespace App\Controller;
 
-use App\Entity\Company;
 use App\Entity\Professional;
 use App\Repository\ProfessionalRepository;
 use App\Repository\CompanyRepository;
-use Doctrine\ORM\EntityManager;
-use Doctrine\DBAL\Types\StringType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -16,15 +13,12 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
-use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use JMS\Serializer\SerializerInterface;
-use JMS\Serializer\Serializer;
 use JMS\Serializer\SerializationContext;
-use JMS\Serializer\Annotation\Groups;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
 
@@ -46,6 +40,18 @@ class ProfessionalController extends AbstractController
         response: 200,
         description: '',
         content: new Model(type: Professional::class)
+    )]
+    #[OA\Parameter(
+        name: 'page',
+        in: 'query',
+        description: 'The page you want that the data come from. Exemple : 1',
+        schema: new OA\Schema(type: 'int', default: 1)
+    )]
+    #[OA\Parameter(
+        name: 'limit',
+        in: 'query',
+        description: 'The limit of result you want. Exemple: 5',
+        schema: new OA\Schema(type: 'int', default: 5)
     )]
     #[Route('/api/professionals', name: 'professional.getAll', methods:['GET'])]
     public function getAllProfessionals(
@@ -189,6 +195,7 @@ class ProfessionalController extends AbstractController
         return new JsonResponse($jsonProfessional, JsonResponse::HTTP_CREATED, ["Location" => $location], true);
     }
 
+    
 
     /**
      * Update the professional (id) according to the json file given as parameter
@@ -254,6 +261,8 @@ class ProfessionalController extends AbstractController
         $jsonProfessional = $serializer->serialize($professional, "json", $context);
         return new JsonResponse($jsonProfessional, JsonResponse::HTTP_CREATED, ["Location" => $location], true);
     }
+
+
 
     /**
      * Add a new note to the professional
