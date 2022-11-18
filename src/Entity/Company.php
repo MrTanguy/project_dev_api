@@ -30,7 +30,7 @@ class Company
     #[Groups(["getCompany", "getAllCompanies"])]
     private ?int $id = null;
 
-    #[Asset\NotBlank(message: "Une company doit avoir un nom")]
+    #[Asset\NotBlank(message: "Une companie doit avoir un nom")]
     #[ORM\Column(length: 255)]
     #[Groups(["getCompany", "getAllCompanies"])]
     private ?string $name = null;
@@ -41,15 +41,29 @@ class Company
     private ?string $job = null;
 
     #[ORM\Column(length: 50)]
+    #[Asset\Choice(
+        choices: ['on', 'off'],
+        message: 'Le status doit être on ou off'
+    )]
     #[Groups(["getCompany", "getAllCompanies"])]
     private ?string $status = null;
 
     #[Asset\NotBlank(message: "La latitude est obligatoire")]
+    #[Asset\Range(
+        min: -90,
+        max: 90,
+        notInRangeMessage: "La latitude doit être comprise entre -90 et 90"
+    )]
     #[ORM\Column]
     #[Groups(["getCompany", "getAllCompanies"])]
     private ?float $lat = null;
 
     #[Asset\NotBlank(message: "La longitude est obligatoire")]
+    #[Asset\Range(
+        min: -180,
+        max: 180,
+        notInRangeMessage: "La longitude doit être comprise entre -180 et 180"
+    )]
     #[ORM\Column]
     #[Groups(["getCompany", "getAllCompanies"])]
     private ?float $lon = null;

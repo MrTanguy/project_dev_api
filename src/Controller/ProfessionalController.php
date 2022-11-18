@@ -235,12 +235,14 @@ class ProfessionalController extends AbstractController
         EntityManagerInterface $entityManager,
         SerializerInterface $serializer,
         UrlGeneratorInterface $urlGenerator,
-        TagAwareCacheInterface $cache
+        TagAwareCacheInterface $cache,
+        ValidatorInterface $validator
     ) : JsonResponse
     {
         $cache->invalidateTags(["professionalCache"]);
 
         $updatedProfessional = $serializer->deserialize($request->getContent(), Professional::class, 'json');
+
         
         $professional->setFirstname($updatedProfessional->getFirstname() ? $updatedProfessional->getFirstname() : $professional->getFirstname());
         $professional->setLastname($updatedProfessional->getLastname() ? $updatedProfessional->getLastname() : $professional->getLastname());
@@ -248,14 +250,20 @@ class ProfessionalController extends AbstractController
         $professional->setCompanyJobId($updatedProfessional->getCompanyJobId() ? $updatedProfessional->getCompanyJobId() : $professional->getCompanyJobId());
         $professional->setNoteCount($updatedProfessional->getNoteCount() ? $updatedProfessional->getNoteCount() : $professional->getNoteCount());
         $professional->setNoteAvg($updatedProfessional->getNoteAvg() ? $updatedProfessional->getNoteAvg() : $professional->getNoteAvg());
-
+        
         $professional->setStatus('on');
+        
+        $errors = $validator->validate($professional);
+        if($errors->count() > 0)
+        {
+            return new JsonResponse($serializer->serialize($errors, 'json'), JsonResponse::HTTP_BAD_REQUEST, [], true);
+        };
 
         $entityManager->persist($professional);
         $entityManager->flush();
-
+        
         $location = $urlGenerator->generate("professional.get", ["idProfessional" => $professional->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
-
+        
         $context = SerializationContext::create()->setGroups(["getProfessionals"]);
 
         $jsonProfessional = $serializer->serialize($professional, "json", $context);

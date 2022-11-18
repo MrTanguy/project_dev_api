@@ -35,10 +35,9 @@ class Professional
 
     #[ORM\Column(length: 255)]
     #[Asset\NotBlank(message: "Un professionel doit avoir un status")]
-    #[Asset\NotNull()]
     #[Asset\Choice(
         choices: ['on', 'off'],
-        message: 'Error status'
+        message: 'Le status doit être on ou off'
     )]
     private ?string $status = null;
 

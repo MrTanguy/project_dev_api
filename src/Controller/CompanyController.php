@@ -4,23 +4,24 @@ namespace App\Controller;
 
 use App\Entity\Company;
 use OpenApi\Attributes as OA;
+use function PHPSTORM_META\type;
 use App\Repository\CompanyRepository;
 use JMS\Serializer\SerializerInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\SerializationContext;
+use Nelmio\ApiDocBundle\Annotation\Model;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
-use Nelmio\ApiDocBundle\Annotation\Model;
-
-use function PHPSTORM_META\type;
 
 #[OA\Tag(name: 'Company')]
 class CompanyController extends AbstractController
@@ -74,8 +75,6 @@ class CompanyController extends AbstractController
        
         return new JsonResponse($jsonProfessionals, Response::HTTP_OK, [], true);
     }
-
-
 
     /**
      * Return all companies, from the closest to the farest according to your localisation.
@@ -159,7 +158,8 @@ class CompanyController extends AbstractController
         SerializerInterface $serializer,
         EntityManagerInterface $entityManager,
         UrlGeneratorInterface $urlGenerator,
-        Company $company
+        Company $company,
+        ValidatorInterface $validator
     ) : JsonResponse
     {
         $cache->invalidateTags(["companiesCache"]);
@@ -172,6 +172,13 @@ class CompanyController extends AbstractController
         $company->setLon($updatedCompany->getLon() ? $updatedCompany->getLon() : $company->getLon());
 
         $company->setStatus('on');
+
+        
+        $errors = $validator->validate($company);
+        if($errors->count() > 0)
+        {
+            return new JsonResponse($serializer->serialize($errors, 'json'), JsonResponse::HTTP_BAD_REQUEST, [], true);
+        };
 
         $entityManager->persist($company);
         $entityManager->flush();
@@ -215,7 +222,8 @@ class CompanyController extends AbstractController
         EntityManagerInterface $entityManager,
         SerializerInterface $serializer,
         UrlGeneratorInterface $urlGenerator,
-        TagAwareCacheInterface $cache
+        TagAwareCacheInterface $cache,
+        ValidatorInterface $validator
     ) : JsonResponse
     {
         $cache->invalidateTags(["companiesCache", "nearestCompaniesCache"]);
@@ -224,6 +232,11 @@ class CompanyController extends AbstractController
         $company->setStatus('on');
         $company->setNoteCount(0);
 
+        $errors = $validator->validate($company);
+        if($errors->count() > 0)
+        {
+            return new JsonResponse($serializer->serialize($errors, 'json'), JsonResponse::HTTP_BAD_REQUEST, [], true);
+        };
 
         $entityManager->persist($company);
         $entityManager->flush();
@@ -233,18 +246,4 @@ class CompanyController extends AbstractController
         $jsonCompany = $serializer->serialize($company, 'json', $context);
         return new JsonResponse($jsonCompany, JsonResponse::HTTP_CREATED, ["Location" => $location], true);
     }
-
-    // Récupère la note de l'entreprise.
-    // #[Route('/api/companies/note/{idCompany}', name: ' company.getNote', methods: ['GET'])]
-    // #[ParamConverter("company", options: ['id' => 'idCompany'], class:'App\Entity\Company')]
-    // public function getNoteProfessionals(
-    //     Company $company,
-    //     SerializerInterface $serializer
-    // ) : JsonResponse
-    // {
-    //     //Récupération de la note moyenne
-    //     $note = $company->getNoteAvg();
-
-    //     return new JsonResponse($serializer->serialize($note, 'json'), Response::HTTP_OK, ['accept' => 'json'], true);
-    // }
 }
