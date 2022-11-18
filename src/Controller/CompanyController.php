@@ -134,7 +134,8 @@ class CompanyController extends AbstractController
         if (!is_numeric($lat) || !is_numeric($lon) || $lat < -90 || $lat > 90 || $lon < -180 || $lon > 180) {
             return new JsonResponse("La latitude doit être une valeur numérique comprise entre -90 et 90 et la longitude doit être une valeur numérique comprise entre -180 et 180.", Response::HTTP_BAD_REQUEST);
         }
-        $job = $request->get('job');
+        $job = ucfirst($request->get('job'));
+        echo($job);
         $limit = intval($request->get('limit', 5));
         
         $idCache = 'getNearestCompanies';
@@ -149,6 +150,33 @@ class CompanyController extends AbstractController
         return new JsonResponse($jsonNearestCompanies, Response::HTTP_OK, ['accept' => 'json'], true);
     }
 
+    /**
+     * Update a company, according to data given in the body.
+     *
+     * @param TagAwareCacheInterface $cache
+     * @param Request $request
+     * @param SerializerInterface $serializer
+     * @param EntityManagerInterface $entityManager
+     * @param UrlGeneratorInterface $urlGenerator
+     * @param Company $company
+     * @param ValidatorInterface $validator
+     * 
+     * @return JsonResponse
+     */
+    #[OA\Response(
+        response: 200,
+        description: '',
+        content: new Model(type: Company::class)
+    )]
+    #[OA\RequestBody(
+        request: 'company.update',
+        description: 'Company json object that will be used to update the database, all properties aren\'t needed, send only one used.',
+        required: true,
+        content: new OA\JsonContent(
+            type: 'object',
+            ref: '#/components/schemas/postNewUpdateCompany'
+        )
+    )]
     #[Route('/api/companies/{idCompany}', name: 'company.update', methods: ['PUT'])]
     #[ParamConverter("company", options: ['id' => 'idCompany'], class: 'App\Entity\Company')]
     #[IsGranted('ROLE_ADMIN', message: "You need the admin role to modify a company.")]
@@ -167,7 +195,7 @@ class CompanyController extends AbstractController
         $updatedCompany = $serializer->deserialize($request->getContent(), Company::class, 'json');
 
         $company->setName($updatedCompany->getName() ? $updatedCompany->getName() : $company->getName());
-        $company->setJob($updatedCompany->getJob() ? $updatedCompany->getJob() : $company->getJob());
+        $company->setJob($updatedCompany->getJob() ? ucfirst($updatedCompany->getJob()) : $company->getJob());
         $company->setLat($updatedCompany->getLat() ? $updatedCompany->getLat() : $company->getLat());
         $company->setLon($updatedCompany->getLon() ? $updatedCompany->getLon() : $company->getLon());
 
@@ -187,10 +215,23 @@ class CompanyController extends AbstractController
         
         $context = SerializationContext::create()->setGroups(["getCompany"]);
 
-        $jsonCompany = $serializer->serialize($$company, "json", $context);
+        $jsonCompany = $serializer->serialize($company, "json", $context);
         return new JsonResponse($jsonCompany, JsonResponse::HTTP_CREATED, ["Location" => $location], true);
     }
 
+
+     /**
+     * Return the company matching a specific id
+     * 
+     * @param ProfessionalRepository $repository
+     * @param SerializerInterface $serializer
+     * @return JsonResponse
+     */
+    #[OA\Response(
+        response: 200,
+        description: 'Successful response',
+        content: new Model(type: Company::class)
+    )]
     #[Route('/api/companies/{idCompany}', name: 'company.get', methods: ['GET'])]
     #[ParamConverter("company", options: ['id' => 'idCompany'], class:'App\Entity\Company')]
     public function getCompanies(
@@ -201,8 +242,24 @@ class CompanyController extends AbstractController
         return new JsonResponse($serializer->serialize($company, 'json'), Response::HTTP_OK, ['accept' => 'json'], true);
     }
 
+
+    /**
+     * Delete the company matching the id in query
+     * 
+     * @param Company $company
+     * @param EntityManagerInterface $entityManager
+     * @param TagAwareCacheInterface $cache
+     * 
+     * @return JsonResponse
+     */
+    #[OA\Response(
+        response: 200,
+        description: '',
+        content: new Model(type: Company::class)
+    )]
     #[Route('/api/companies/{idCompany}', name: 'company.delete', methods: ['DELETE'])]
     #[ParamConverter("company", options: ['id' => 'idCompany'], class: 'App\Entity\Company')]
+    #[IsGranted('ROLE_ADMIN', message: "You need the admin role to modify a company.")]
     public function deleteCompany(
         Company $company,
         EntityManagerInterface $entityManager,
@@ -210,12 +267,40 @@ class CompanyController extends AbstractController
     ) : JsonResponse
     {
         $cache->invalidateTags(["companiesCache", "nearestCompaniesCache"]);
-
         $entityManager->remove($company);
         $entityManager->flush();
         return new JsonResponse(null, JsonResponse::HTTP_NO_CONTENT);
     }
     
+
+
+    /**
+     * Create a new company, needs a json as parameter.
+     *
+     * @param TagAwareCacheInterface $cache
+     * @param Request $request
+     * @param SerializerInterface $serializer
+     * @param EntityManagerInterface $entityManager
+     * @param UrlGeneratorInterface $urlGenerator
+     * @param Company $company
+     * @param ValidatorInterface $validator
+     * 
+     * @return JsonResponse
+     */
+    #[OA\Response(
+        response: 200,
+        description: '',
+        content: new Model(type: Company::class)
+    )]
+    #[OA\RequestBody(
+        request: 'company.update',
+        description: 'Company json object that will be used to update the database, all properties aren\'t needed, send only one used.',
+        required: true,
+        content: new OA\JsonContent(
+            type: 'object',
+            ref: '#/components/schemas/postNewUpdateCompany'
+        )
+    )]
     #[Route('/api/companies', name: 'company.create', methods: ['POST'])]
     public function createCompany(
         Request $request,
@@ -230,7 +315,8 @@ class CompanyController extends AbstractController
 
         $company = $serializer->deserialize($request->getContent(), Company::class, 'json');
         $company->setStatus('on');
-        $company->setNoteCount(0);
+        $job = $company->getJob();
+        $company->setJob(ucfirst($job));
 
         $errors = $validator->validate($company);
         if($errors->count() > 0)

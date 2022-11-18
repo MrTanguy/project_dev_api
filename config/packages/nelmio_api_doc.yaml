@@ -28,18 +28,27 @@ nelmio_api_doc:
             company_job_id:
               type: int
               example: 007
-            noteCount:
-              type: int
-              example: 0
-            NoteAvg:
-              type: int
-              example: 0
         postAddNoteProfessional:
           type: object
           properties:
             note:
               type: int
               example: 7
+        postNewUpdateCompany:
+          type: object
+          properties:
+            name:
+              type: string
+              example: Plomberie&Co
+            job:
+              type: string
+              example: plombier
+            lat:
+              type: float
+              example: 45.7465014
+            lon:
+              type: float
+              example: 4.8381741
     security:
       - Bearer: []
 
@@ -57,8 +66,10 @@ nelmio_api_doc:
                   properties:
                     username:
                       type: string
+                      example: admin
                     password:
                       type: string
+                      example: password
                   type: object
           responses:
             "200":
