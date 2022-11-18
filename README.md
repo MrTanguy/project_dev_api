@@ -28,7 +28,7 @@ Go to the project directory
 Install dependencies
 
 ```bash
-  composer Install
+  composer install
 ```
 
 Create a 'jwt' directory inside 'config' directory, then run the command
