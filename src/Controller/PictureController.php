@@ -3,38 +3,30 @@
 namespace App\Controller;
 
 use App\Entity\Picture;
-use App\Repository\PictureRepository;
-use Doctrine\ORM\EntityManager;
-use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Component\Serializer\SerializerInterface;
 use OpenApi\Annotations as OA;
+use App\Repository\PictureRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 
 /**
  * @OA\Tag(name="Picture")
  */
 class PictureController extends AbstractController
 {
-    #[Route('/picture', name: 'app_picture')]
-    public function index(): JsonResponse
-    {
-        return $this->json([
-            'message' => 'Welcome to your new controller!',
-            'path' => 'src/Controller/PictureController.php',
-        ]);
-    }
-
     #[Route('api/pictures/{idPicture}', name:"picture.get", methods:['GET'])]
     public function getPicture(
     int $idPicture, 
     SerializerInterface $serializer, 
     PictureRepository $pictureRepository, 
-    Request $request,
-    UrlGeneratorInterface $urlGenerator
+    Request $request
     ) :JsonResponse
     {
         $picture = $pictureRepository->find($idPicture);
@@ -49,6 +41,7 @@ class PictureController extends AbstractController
     }
 
     #[Route('api/pictures', name: 'pictures.create', methods:['POST'])]
+    #[IsGranted("ROLE_ADMIN", message: "Admin rights needed.")]
     public function createPicture(
         Request $request,
         EntityManagerInterface $entityManager,
@@ -70,5 +63,17 @@ class PictureController extends AbstractController
         $location = $urlGenerator->generate("picture.get", ["idPicture" => $picture->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
         $jsonPictures = $serializer->serialize($picture, 'json', ['groups' => 'getPicture']);
         return new JsonResponse($jsonPictures, JsonResponse::HTTP_CREATED, ['Location' => $location], true);
+    }
+
+    #[Route('/api/pictures/{idPicture}', name: 'pictures.delete', methods: ['DELETE'])]
+    #[ParamConverter("picture", options:["id"=>"idPicture"], class:"App\Entity\Picture")]
+    #[IsGranted("ROLE_ADMIN", message: "Admin rights needed.")]
+    public function deletePicture(
+        Picture $picture,
+        EntityManagerInterface $entityManager
+    ): JsonResponse {
+        $entityManager->remove($picture);
+        $entityManager->flush();
+        return new JsonResponse(null,Response::HTTP_NO_CONTENT);
     }
 }
