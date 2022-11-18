@@ -122,12 +122,12 @@ class CompanyController extends AbstractController
     public function getNearestCompanies(
         Request $request,
         SerializerInterface $serializer,
-        companyRepository $companyRepository,
-        TagAwareCacheInterface $cache
+        companyRepository $companyRepository
     ) : JsonResponse
     {
         $lat = $request->get('lat');
         $lon = $request->get('lon');
+
         if (empty($lat) || empty($lon)) {
             return new JsonResponse("Vous devez renseigner une latitude (lat) et une longitude (lon).", Response::HTTP_BAD_REQUEST);
         }
@@ -135,17 +135,11 @@ class CompanyController extends AbstractController
             return new JsonResponse("La latitude doit être une valeur numérique comprise entre -90 et 90 et la longitude doit être une valeur numérique comprise entre -180 et 180.", Response::HTTP_BAD_REQUEST);
         }
         $job = ucfirst($request->get('job'));
-        echo($job);
         $limit = intval($request->get('limit', 5));
         
-        $idCache = 'getNearestCompanies';
-        $jsonNearestCompanies = $cache->get($idCache, function (ItemInterface $item) use ($companyRepository, $serializer, $lat, $lon, $job, $limit) {
-            echo "MISE EN CACHE";
-            $item->tag("nearCompaniesCache");
-            $companies = $companyRepository->findNearestCompanyByJob($lat, $lon, $job, $limit);
-            $context = SerializationContext::create()->setGroups(['getCompany']);
-            return $serializer->serialize($companies, 'json', $context);
-        });
+        $companies = $companyRepository->findNearestCompanyByJob($lat, $lon, $job, $limit);
+        $context = SerializationContext::create()->setGroups(['getCompany']);
+        $jsonNearestCompanies =  $serializer->serialize($companies, 'json', $context);
 
         return new JsonResponse($jsonNearestCompanies, Response::HTTP_OK, ['accept' => 'json'], true);
     }
